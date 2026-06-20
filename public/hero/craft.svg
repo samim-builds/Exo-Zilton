@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" fill="none">
+  <rect width="1600" height="900" fill="#1B2A4A"/>
+  <rect x="200" y="150" width="500" height="600" rx="8" fill="#B8956A" opacity="0.3"/>
+  <rect x="220" y="170" width="460" height="560" rx="4" fill="#C4A882" opacity="0.2"/>
+  <path d="M900 580 Q900 400 1100 360 Q1300 400 1300 580 L1275 635 Q1100 660 925 635 Z" fill="#F7F3ED"/>
+  <text x="450" y="480" text-anchor="middle" fill="#F7F3ED" font-family="Georgia, serif" font-size="48" opacity="0.6">EZ</text>
+</svg>

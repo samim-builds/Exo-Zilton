@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" fill="none">
+  <rect width="800" height="600" fill="#B8956A"/>
+  <rect x="100" y="80" width="600" height="440" rx="4" fill="#C4A882"/>
+  <rect x="120" y="100" width="560" height="400" fill="#D4B896"/>
+  <text x="400" y="320" text-anchor="middle" fill="#1B2A4A" font-family="Georgia, serif" font-size="32" font-weight="600">EXO ZILTON</text>
+  <text x="400" y="360" text-anchor="middle" fill="#1B2A4A" font-family="cursive" font-size="24" font-style="italic">Gift-Ready Packaging</text>
+</svg>

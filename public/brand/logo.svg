@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
+  <circle cx="100" cy="100" r="98" stroke="#1B2A4A" stroke-width="2"/>
+  <circle cx="100" cy="100" r="88" stroke="#C4A265" stroke-width="1"/>
+  <defs>
+    <path id="topArc" d="M 35 100 A 65 65 0 0 1 165 100"/>
+    <path id="bottomArc" d="M 165 100 A 65 65 0 0 1 35 100"/>
+  </defs>
+  <text fill="#1B2A4A" font-family="Georgia, serif" font-size="11" font-weight="600" letter-spacing="3">
+    <textPath href="#topArc" startOffset="50%" text-anchor="middle">EXO ZILTON</textPath>
+  </text>
+  <text fill="#1B2A4A" font-family="Georgia, serif" font-size="8" font-weight="600" letter-spacing="2">
+    <textPath href="#bottomArc" startOffset="50%" text-anchor="middle">MORTAR &amp; PESTLE</textPath>
+  </text>
+  <text x="100" y="88" text-anchor="middle" fill="#1B2A4A" font-family="cursive" font-size="36" font-style="italic">EZ</text>
+  <ellipse cx="100" cy="128" rx="22" ry="10" fill="#F7F3ED" stroke="#1B2A4A" stroke-width="1.5"/>
+  <path d="M78 128 Q78 118 100 115 Q122 118 122 128" fill="#F7F3ED" stroke="#1B2A4A" stroke-width="1.5"/>
+  <rect x="97" y="95" width="6" height="28" rx="3" fill="#B8956A" stroke="#1B2A4A" stroke-width="1"/>
+  <circle cx="100" cy="92" r="5" fill="#F7F3ED" stroke="#1B2A4A" stroke-width="1"/>
+</svg>

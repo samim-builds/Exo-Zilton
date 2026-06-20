@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" fill="none">
+  <rect width="600" height="600" fill="#FAFAF8"/>
+  <circle cx="300" cy="300" r="120" fill="#F5F2EC" stroke="#D4CFC7" stroke-width="3"/>
+  <circle cx="300" cy="300" r="90" fill="#F0EDE7" stroke="#D4CFC7" stroke-width="1.5"/>
+  <circle cx="300" cy="300" r="8" fill="#D4CFC7"/>
+  <text x="300" y="480" text-anchor="middle" fill="#1B2A4A" font-family="Arial, sans-serif" font-size="18" letter-spacing="2">TOP VIEW</text>
+</svg>
