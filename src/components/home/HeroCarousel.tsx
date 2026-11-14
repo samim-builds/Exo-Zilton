@@ -4,182 +4,144 @@ import Image from "next/image";
 import Link from "next/link";
 import useEmblaCarousel from "embla-carousel-react";
 import Autoplay from "embla-carousel-autoplay";
-import { useCallback, useEffect, useState } from "react";
-
-type SlideTheme = "light" | "dark";
-type EyebrowSize = "standard" | "lead";
+import { useEffect, useMemo, useState } from "react";
 
 const slides = [
   {
     image: "/hero/grind.webp",
-    eyebrow: "fully.",
-    eyebrowSize: "standard" as EyebrowSize,
-    title: "Vitrified",
-    accent: "Porcelain",
-    description:
-      "Vitrified porcelain ensures there is no staining or absorption of odours, tastes or bacteria to avoid cross contamination.",
-    cta: "Shop Now",
-    href: "/products",
-    theme: "dark" as SlideTheme,
+    alt: "Unglazed porcelain mortar and pestle with whole spices on stone",
   },
   {
     image: "/hero/crush.webp",
-    eyebrow: "grind.",
-    eyebrowSize: "standard" as EyebrowSize,
-    title: "Crush",
-    accent: "Flavour",
-    description:
-      "Designed to maximise flavour blends, the must-have mortar and pestle remains a staple in any home kitchen.",
-    cta: "Explore Collection",
-    href: "/products",
-    theme: "light" as SlideTheme,
+    alt: "Pestle grinding spices in an unglazed porcelain mortar",
   },
   {
     image: "/hero/craft.webp",
-    eyebrow: "timeless traditional",
-    eyebrowSize: "standard" as EyebrowSize,
-    title: "Heritage",
-    accent: "Design",
-    description:
-      "This iconic pestle and mortar has been carefully crafted using unglazed porcelain to offer a timeless look.",
-    cta: "Our Story",
-    href: "/about",
-    theme: "dark" as SlideTheme,
+    alt: "Porcelain mortars arranged with spices, citrus, and rosemary",
   },
 ];
 
-function HeroSlideContent({
-  slide,
-  isFirst,
-}: {
-  slide: (typeof slides)[number];
-  isFirst?: boolean;
-}) {
-  const isDark = slide.theme === "dark";
-  const TitleTag = isFirst ? "h1" : "h2";
-  const isLeadEyebrow = slide.eyebrowSize === "lead";
-
-  return (
-    <div className="relative max-w-2xl animate-fade-in lg:max-w-3xl">
-      <div className="relative">
-        <p
-          className={`mb-3 font-serif italic tracking-wide ${
-            isLeadEyebrow
-              ? "text-3xl font-semibold lowercase leading-tight sm:text-4xl md:mb-4 md:text-5xl lg:text-6xl"
-              : "text-2xl font-medium sm:text-3xl md:text-4xl"
-          } ${isDark ? "text-gold" : "text-kraft"}`}
-        >
-          {slide.eyebrow}
-        </p>
-
-        <TitleTag
-          className={`font-serif text-5xl font-bold leading-none sm:text-6xl md:text-7xl lg:text-8xl ${isDark ? "text-white drop-shadow-lg" : "text-navy"}`}
-        >
-          {slide.title}
-        </TitleTag>
-
-        <p
-          className={`font-script -mt-1 text-4xl leading-none sm:-mt-2 sm:text-5xl md:text-6xl lg:text-7xl ${isDark ? "text-gold" : "text-navy"}`}
-        >
-          {slide.accent}
-        </p>
-
-        <p
-          className={`mt-8 max-w-md text-base leading-relaxed sm:mt-10 sm:text-lg md:max-w-xl ${isDark ? "text-white/90" : "text-charcoal/90"}`}
-        >
-          {slide.description}
-        </p>
-
-        <Link
-          href={slide.href}
-          className={`mt-8 inline-flex rounded-full px-10 py-3.5 text-sm uppercase tracking-widest transition-opacity hover:opacity-90 sm:mt-10 ${isDark ? "bg-white text-navy shadow-lg" : "bg-navy text-white shadow-lg"}`}
-        >
-          {slide.cta}
-        </Link>
-      </div>
-    </div>
-  );
+function pad(index: number) {
+  return String(index + 1).padStart(2, "0");
 }
 
 export function HeroCarousel() {
-  const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true }, [
-    Autoplay({ delay: 6000, stopOnInteraction: false }),
-  ]);
+  const plugins = useMemo(
+    () => [Autoplay({ delay: 6000, stopOnInteraction: false })],
+    [],
+  );
+  const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true, duration: 32 }, plugins);
   const [selectedIndex, setSelectedIndex] = useState(0);
-
-  const scrollPrev = useCallback(() => emblaApi?.scrollPrev(), [emblaApi]);
-  const scrollNext = useCallback(() => emblaApi?.scrollNext(), [emblaApi]);
 
   useEffect(() => {
     if (!emblaApi) return;
+
     const onSelect = () => setSelectedIndex(emblaApi.selectedScrollSnap());
     emblaApi.on("select", onSelect);
     onSelect();
+
+    const motion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    if (motion.matches) {
+      emblaApi.plugins()?.autoplay?.stop();
+    }
+
     return () => {
       emblaApi.off("select", onSelect);
     };
   }, [emblaApi]);
 
+  const progress = ((selectedIndex + 1) / slides.length) * 100;
+
   return (
-    <section className="relative overflow-hidden" aria-label="Featured highlights">
-      <div ref={emblaRef} className="overflow-hidden">
-        <div className="flex">
-          {slides.map((slide, index) => (
-            <div key={slide.title} className="relative min-w-0 flex-[0_0_100%]">
-              <div className="relative aspect-[16/9] min-h-[480px] w-full sm:min-h-[560px] lg:min-h-[640px]">
-                <Image
-                  src={slide.image}
-                  alt=""
-                  fill
-                  className="object-cover object-center"
-                  priority={index === 0}
-                  sizes="100vw"
+    <section className="bg-porcelain" aria-label="Featured highlights">
+      <div className="mx-auto grid max-w-7xl grid-cols-1 items-stretch gap-10 px-5 py-14 sm:px-8 sm:py-16 lg:grid-cols-[minmax(0,1.2fr)_auto] lg:gap-x-16 lg:px-10 lg:py-20">
+        <div className="@container flex flex-col lg:h-full">
+          <p className="font-sans text-[11px] uppercase tracking-[0.22em] text-[#8F6E3E]">
+            01 — Unglazed vitrified porcelain
+          </p>
+          <h1 className="mt-5 font-serif text-[2.75rem] font-medium leading-[0.95] tracking-tight text-navy sm:text-6xl lg:text-[4.25rem]">
+            Pure Flavour.
+          </h1>
+          <p className="mt-2 whitespace-nowrap font-serif font-medium italic leading-none tracking-tight text-navy [font-size:clamp(1.35rem,7.6cqi,3rem)]">
+            Zero Staining. Zero Odours.
+          </p>
+          <p className="mt-6 max-w-md font-sans text-[15px] leading-[1.7] text-[#4A4742] sm:text-[16px]">
+            Engineered from vitrified unglazed porcelain, designed to grind without retaining
+            previous flavours. An indestructible culinary tool for life.
+          </p>
+          <div className="mt-8 flex flex-wrap items-center gap-x-8 gap-y-4">
+            <Link
+              href="/products"
+              className="inline-flex bg-[#0D1929] px-7 py-3.5 font-sans text-[12px] uppercase tracking-[0.16em] text-white transition-colors hover:bg-bronze"
+            >
+              Explore collection
+            </Link>
+            <Link
+              href="/#why-porcelain"
+              className="font-sans text-[15px] text-navy transition-colors hover:text-bronze"
+            >
+              Why Porcelain? →
+            </Link>
+          </div>
+
+          <div className="mt-12 max-w-md lg:mt-auto lg:pt-16">
+            <p className="flex items-baseline gap-3 font-sans text-[12px] tracking-[0.22em] text-navy">
+              <span>{pad(selectedIndex)}</span>
+              <span className="font-serif text-[1.15em] font-light tracking-normal text-[#8F6E3E]" aria-hidden="true">
+                —
+              </span>
+              <span className="text-[#4A4742]">{pad(slides.length - 1)}</span>
+            </p>
+            <div
+              className="relative mt-4 h-px bg-[#EBE7DE]"
+              role="tablist"
+              aria-label="Slides"
+            >
+              <div
+                className="absolute -top-px left-0 h-[2px] bg-[#0D1929] transition-[width] duration-500 motion-reduce:transition-none"
+                style={{ width: `${progress}%` }}
+              />
+              {slides.map((slide, index) => (
+                <button
+                  key={slide.image}
+                  type="button"
+                  role="tab"
+                  aria-selected={selectedIndex === index}
+                  aria-label={`Go to slide ${index + 1}`}
+                  onClick={() => emblaApi?.scrollTo(index)}
+                  className="absolute top-1/2 h-8 -translate-y-1/2"
+                  style={{
+                    left: `${(index / slides.length) * 100}%`,
+                    width: `${100 / slides.length}%`,
+                  }}
                 />
-                <div
-                  className={`absolute inset-0 ${
-                    slide.theme === "dark"
-                      ? "bg-gradient-to-r from-navy/70 via-navy/35 to-transparent"
-                      : "bg-gradient-to-r from-white/85 via-white/50 to-transparent"
-                  }`}
-                />
-                <div className="absolute inset-0 flex items-center">
-                  <div className="mx-auto w-full max-w-7xl px-5 sm:px-8 lg:px-10">
-                    <HeroSlideContent slide={slide} isFirst={index === 0} />
-                  </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="flex lg:w-fit lg:items-start">
+          <div className="w-full border border-[#EBE7DE] bg-porcelain p-3 sm:p-4 lg:w-[32rem]">
+            <div className="relative aspect-[5/4]">
+              <div ref={emblaRef} className="absolute inset-0 overflow-hidden">
+                <div className="flex h-full">
+                  {slides.map((slide, index) => (
+                    <div key={slide.image} className="relative h-full min-w-0 flex-[0_0_100%]">
+                      <Image
+                        src={slide.image}
+                        alt={slide.alt}
+                        fill
+                        priority={index === 0}
+                        className="object-cover object-center"
+                        sizes="(max-width: 1024px) 100vw, 512px"
+                      />
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
-          ))}
+          </div>
         </div>
-      </div>
-
-      <button
-        type="button"
-        onClick={scrollPrev}
-        aria-label="Previous slide"
-        className="absolute left-4 top-1/2 z-10 -translate-y-1/2 rounded-full bg-white/90 p-3 text-2xl leading-none text-navy shadow-md transition hover:bg-white"
-      >
-        ‹
-      </button>
-      <button
-        type="button"
-        onClick={scrollNext}
-        aria-label="Next slide"
-        className="absolute right-4 top-1/2 z-10 -translate-y-1/2 rounded-full bg-white/90 p-3 text-2xl leading-none text-navy shadow-md transition hover:bg-white"
-      >
-        ›
-      </button>
-
-      <div className="absolute bottom-6 left-1/2 z-10 flex -translate-x-1/2 gap-2">
-        {slides.map((_, index) => (
-          <button
-            key={index}
-            type="button"
-            aria-label={`Go to slide ${index + 1}`}
-            onClick={() => emblaApi?.scrollTo(index)}
-            className={`h-2 rounded-full transition-all ${selectedIndex === index ? "w-8 bg-white shadow" : "w-2 bg-white/60"}`}
-          />
-        ))}
       </div>
     </section>
   );

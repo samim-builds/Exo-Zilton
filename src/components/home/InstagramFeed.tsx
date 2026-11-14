@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Script from "next/script";
+import { Reveal } from "@/components/shared/Reveal";
 import { siteConfig, getInstagramUrl } from "@/lib/site";
 import { instagramPosts, getInstagramPostUrl } from "@/lib/instagram";
 
@@ -82,13 +83,15 @@ export function InstagramFeed() {
             className="mb-6 rounded-full"
             aria-hidden="true"
           />
-          <p className="text-sm uppercase tracking-[0.3em] text-gold">Stay Connected</p>
-          <h2
-            id="instagram-heading"
-            className="mt-3 font-serif text-2xl font-semibold text-white sm:text-3xl"
-          >
-            Follow our Instagram journey...
-          </h2>
+          <Reveal>
+            <p className="text-sm uppercase tracking-[0.3em] text-gold">Stay Connected</p>
+            <h2
+              id="instagram-heading"
+              className="mt-3 font-serif text-2xl font-semibold text-white sm:text-3xl"
+            >
+              Follow our Instagram journey...
+            </h2>
+          </Reveal>
           <a
             href={profileUrl}
             target="_blank"

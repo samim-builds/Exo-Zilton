@@ -1,0 +1,26 @@
+# Exo Zilton Luxury Design System Rules
+
+## Visual Philosophy: Quiet Luxury & Editorial Craft
+- Target Aesthetic: Editorial European kitchenware (Aesop, Alessi, David Mellor, Borough Kitchen).
+- Layout Grid: Strict Golden Ratio proportions (61.8% gallery, 38.2% details).
+- Zero "Vibe-Coded" SaaS Tropes:
+  - NO chunky rounded buttons (`rounded-full` or `rounded-2xl` are banned; use architectural `rounded-none` or `rounded-[2px]`).
+  - NO harsh box shadows or heavy glows; depth is defined solely by subtle 1px hairline borders (`border-[#EBE7DE]`) and tone shifts.
+  - NO neon saturated buttons (no bright green WhatsApp pills).
+  - NO arbitrary Tailwind values (stick to the defined Golden Ratio scale).
+
+## Typography & Proportions
+- Headings: `font-serif` (Cormorant Garamond), light weights (300/400), tracking-tight on large titles.
+- Accents & Badges: `font-sans` (Inter), all caps, `text-[10px]` or `text-[11px]`, tracking-[0.2em], uppercase.
+- Body Copy: `font-sans` (Inter), `text-[15px]` or `text-[16px]`, `leading-[1.7]`, `text-[#242424]`.
+
+## Color Palette Tokens
+- Background Base: `#F9F8F5` (Bisque Porcelain)
+- Primary Accent: `#0D1929` (Prussian Navy)
+- Secondary Accent: `#8F6E3E` (Burnished Bronze)
+- Dividers: `#EBE7DE` (1px Hairline Stone)
+- Text Primary: `#0D1929`, Text Secondary: `#5C5955`
+
+## Component Standards
+- Buttons: Minimal, architectural, high-contrast hover states (e.g. Prussian Navy transitioning to Burnished Bronze or inverted border).
+- Image Presentations: Museum-style framing, generous borders, dual-image hover transitions with soft crossfades.

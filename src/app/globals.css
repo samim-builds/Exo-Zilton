@@ -1,13 +1,16 @@
 @import "tailwindcss";
 
 :root {
-  --navy: #1b2a4a;
-  --cream: #f7f3ed;
-  --porcelain: #fafaf8;
-  --gold: #c4a265;
+  --navy: #0d1929;
+  --porcelain: #f9f8f5;
+  --bronze: #8f6e3e;
+  --hairline: #ebe7de;
+  --charcoal: #242424;
+  --muted-text: #66625c;
+  --cream: var(--hairline);
+  --gold: var(--bronze);
   --kraft: #b8956a;
-  --charcoal: #2d2d2d;
-  --background: #ffffff;
+  --background: var(--porcelain);
   --foreground: var(--charcoal);
 }
 
@@ -15,9 +18,12 @@
   --color-navy: var(--navy);
   --color-cream: var(--cream);
   --color-porcelain: var(--porcelain);
+  --color-bronze: var(--bronze);
+  --color-hairline: var(--hairline);
   --color-gold: var(--gold);
   --color-kraft: var(--kraft);
   --color-charcoal: var(--charcoal);
+  --color-muted: var(--muted-text);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-serif: var(--font-cormorant);
@@ -38,28 +44,34 @@ h4 {
   font-family: var(--font-cormorant), Georgia, serif;
 }
 
+:focus-visible {
+  outline: 1px solid var(--bronze);
+  outline-offset: 3px;
+}
+
 .font-script {
   font-family: var(--font-great-vibes), cursive;
 }
 
-.hero-eyebrow {
+.hero-kicker {
   font-family: var(--font-cormorant), Georgia, serif;
   font-style: italic;
-  font-weight: 500;
-  letter-spacing: 0.02em;
+  font-weight: 400;
+  letter-spacing: 0.01em;
+  line-height: 1;
 }
 
 .hero-title {
   font-family: var(--font-cormorant), Georgia, serif;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  line-height: 0.78;
+  font-weight: 300;
+  letter-spacing: -0.035em;
+  line-height: 0.82;
 }
 
 .hero-accent {
   font-family: var(--font-great-vibes), cursive;
   font-weight: 400;
-  line-height: 0.85;
+  line-height: 0.72;
   white-space: nowrap;
 }
 
@@ -76,4 +88,10 @@ h4 {
 
 .animate-fade-in {
   animation: fade-in 0.6s ease-out forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-in {
+    animation: none;
+  }
 }

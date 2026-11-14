@@ -8,34 +8,57 @@ type ProductCardProps = {
 };
 
 export function ProductCard({ product }: ProductCardProps) {
+  const primary = product.images[0];
+  const hover = product.images[2] ?? product.images[1];
+  const showHover = Boolean(hover && hover !== primary);
+
   return (
-    <article className="group">
-      <Link href={`/products/${product.slug}`} className="block">
-        <div className="relative aspect-square overflow-hidden rounded-lg bg-porcelain">
-          <Image
-            src={product.images[0]}
-            alt={`${product.name} — ${formatDiameter(product.diameterCm)} porcelain mortar and pestle`}
-            fill
-            className="object-contain p-6 transition-transform duration-300 group-hover:scale-105"
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-          />
+    <article className="border border-hairline bg-porcelain">
+      <Link
+        href={`/products/${product.slug}`}
+        className="group block focus-visible:outline focus-visible:outline-offset-[3px] focus-visible:outline-bronze"
+      >
+        <div className="relative aspect-[4/5] overflow-hidden bg-porcelain">
+          {primary && (
+            <Image
+              src={primary}
+              alt={`${product.name} — ${formatDiameter(product.diameterCm)} porcelain mortar and pestle`}
+              fill
+              className={`object-contain p-8 transition-opacity duration-500 motion-reduce:transition-none sm:p-10 ${
+                showHover ? "group-hover:opacity-0" : ""
+              }`}
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+            />
+          )}
+          {showHover && hover && (
+            <Image
+              src={hover}
+              alt=""
+              fill
+              className="object-contain p-8 opacity-0 transition-opacity duration-500 motion-reduce:transition-none group-hover:opacity-100 sm:p-10"
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+            />
+          )}
           {!product.inStock && (
-            <span className="absolute left-3 top-3 rounded-full bg-charcoal/80 px-3 py-1 text-xs uppercase tracking-wider text-white">
-              Out of Stock
+            <span className="absolute left-4 top-4 border border-hairline bg-porcelain px-2 py-1 font-sans text-[10px] uppercase tracking-[0.18em] text-navy">
+              Out of stock
             </span>
           )}
         </div>
-        <div className="mt-4">
-          <h3 className="font-serif text-lg font-semibold text-navy group-hover:underline">
+        <div className="border-t border-hairline px-5 py-5">
+          <h3 className="font-serif text-xl font-light tracking-tight text-navy">
             {product.name}
           </h3>
-          <p className="mt-1 text-sm text-charcoal/70">
+          <p className="mt-2 font-sans text-[12px] tracking-wide text-muted">
             {formatDiameter(product.diameterCm)} · {product.capacityMl}ml
           </p>
-          <div className="mt-2 flex items-baseline gap-2">
-            <p className="text-lg font-semibold text-navy">{formatPKR(product.pricePKR)}</p>
-            <p className="text-sm text-charcoal/60">{formatUSD(product.priceUSD)}</p>
-          </div>
+          <p className="mt-2 font-sans text-[12px] tracking-wide text-navy">
+            {formatPKR(product.pricePKR)}
+            <span className="mx-2 text-hairline" aria-hidden="true">
+              |
+            </span>
+            <span className="text-muted">{formatUSD(product.priceUSD)}</span>
+          </p>
         </div>
       </Link>
     </article>

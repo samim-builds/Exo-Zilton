@@ -1,6 +1,3 @@
-"use client";
-
-import Image from "next/image";
 import Link from "next/link";
 import type { Product } from "@/lib/product-types";
 import { formatDiameter } from "@/lib/format";
@@ -13,33 +10,32 @@ type SizeSelectorProps = {
 export function SizeSelector({ products, currentSlug }: SizeSelectorProps) {
   return (
     <div>
-      <p className="mb-4 font-serif text-lg text-navy">
-        Available in the following sizes:
+      <p className="mb-3 font-sans text-[10px] uppercase tracking-[0.2em] text-muted">
+        Size
       </p>
-      <div className="flex flex-wrap gap-4">
+      <div className="flex flex-wrap" role="group" aria-label="Available sizes">
         {products.map((product) => {
           const isActive = product.slug === currentSlug;
-          const href = `/products/${product.slug}`;
 
           return (
             <Link
               key={product.slug}
-              href={href}
+              href={`/products/${product.slug}`}
               aria-current={isActive ? "page" : undefined}
-              className={`flex flex-col items-center gap-2 rounded-lg p-2 transition-colors ${isActive ? "ring-2 ring-navy ring-offset-2" : "hover:bg-cream"}`}
+              className={`-ml-px flex min-w-[5.5rem] flex-col items-center border border-hairline px-3 py-3 text-center first:ml-0 ${
+                isActive
+                  ? "relative z-10 border-navy bg-navy text-porcelain"
+                  : "bg-porcelain text-navy hover:border-bronze"
+              }`}
             >
-              <div className="relative h-16 w-16 overflow-hidden rounded-full bg-porcelain">
-                <Image
-                  src={product.images[2] ?? product.images[0]}
-                  alt={`${product.size} top view`}
-                  fill
-                  className="object-contain p-2"
-                  sizes="64px"
-                />
-              </div>
-              <span className="text-center text-xs text-charcoal">
+              <span className="font-sans text-[11px] uppercase tracking-[0.16em]">
                 {product.size}
-                <br />
+              </span>
+              <span
+                className={`mt-1 font-sans text-[11px] tracking-normal ${
+                  isActive ? "text-porcelain/80" : "text-muted"
+                }`}
+              >
                 {formatDiameter(product.diameterCm)}
               </span>
             </Link>

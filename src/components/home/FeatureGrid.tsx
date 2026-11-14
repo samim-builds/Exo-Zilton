@@ -1,3 +1,4 @@
+import { Reveal } from "@/components/shared/Reveal";
 import { SectionHeading } from "@/components/shared/SectionHeading";
 
 const features = [
@@ -31,11 +32,13 @@ export function FeatureGrid() {
   return (
     <section className="bg-cream py-16 sm:py-24">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <SectionHeading
-          eyebrow="Why Exo Zilton"
-          title="Craftsmanship You Can Trust"
-          description="Every mortar and pestle is designed to maximise flavour, durability, and timeless kitchen elegance."
-        />
+        <Reveal>
+          <SectionHeading
+            eyebrow="Why Exo Zilton"
+            title="Craftsmanship You Can Trust"
+            description="Every mortar and pestle is designed to maximise flavour, durability, and timeless kitchen elegance."
+          />
+        </Reveal>
 
         <div className="mt-12 grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
           {features.map((feature) => (

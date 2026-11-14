@@ -24,7 +24,8 @@ export async function POST(request: Request) {
 
   const filename = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, "-")}`;
 
-  if (process.env.BLOB_READ_WRITE_TOKEN) {
+  // @vercel/blob authenticates with either a read-write token or OIDC + store ID.
+  if (process.env.BLOB_READ_WRITE_TOKEN || process.env.BLOB_STORE_ID) {
     const blob = await put(`products/${filename}`, file, { access: "public" });
     return NextResponse.json({ url: blob.url });
   }

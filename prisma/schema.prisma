@@ -28,6 +28,72 @@ model Product {
   createdAt        DateTime       @default(now())
   updatedAt        DateTime       @updatedAt
   images           ProductImage[]
+  orderItems       OrderItem[]
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+enum PaymentMethod {
+  COD
+  PAY_ON_CONFIRMATION
+}
+
+model Customer {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  phone     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  orders    Order[]
+}
+
+model Order {
+  id             String        @id @default(cuid())
+  number         Int           @unique @default(autoincrement())
+  customerId     String
+  customer       Customer      @relation(fields: [customerId], references: [id])
+  status         OrderStatus   @default(PENDING)
+  paymentMethod  PaymentMethod
+  paid           Boolean       @default(false)
+  currency       String
+  subtotal       Int
+  shipping       Int           @default(0)
+  total          Int
+  name           String
+  email          String
+  phone          String
+  addressLine    String
+  city           String
+  postalCode     String?
+  country        String
+  notes          String?
+  courier        String?
+  trackingNumber String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  items          OrderItem[]
+
+  @@index([status, createdAt])
+}
+
+model OrderItem {
+  id          String   @id @default(cuid())
+  orderId     String
+  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId   String?
+  product     Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+  productName String
+  sku         String
+  size        String
+  unitPrice   Int
+  quantity    Int
 }
 
 model ProductImage {

@@ -1,6 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-export function middleware(request: NextRequest) {
+// Optimistic check only: redirects visitors without a session cookie. Admin pages
+// and API routes verify the encrypted session themselves (see src/lib/session.ts).
+export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   if (pathname.startsWith("/admin/login")) {

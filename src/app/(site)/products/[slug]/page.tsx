@@ -12,7 +12,7 @@ import {
   getPublishedProducts,
 } from "@/lib/products";
 import { buildMetadata, productJsonLd, breadcrumbJsonLd, faqJsonLd } from "@/lib/seo";
-import { formatDiameter } from "@/lib/format";
+import { formatDiameter, formatPKR, formatUSD } from "@/lib/format";
 
 export const revalidate = 60;
 
@@ -97,27 +97,41 @@ export default async function ProductPage({ params }: PageProps) {
 
       <div className="py-8 sm:py-12">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <nav aria-label="Breadcrumb" className="mb-8 text-sm text-charcoal/60">
+          <nav
+            aria-label="Breadcrumb"
+            className="mb-10 font-sans text-[11px] uppercase tracking-[0.18em] text-muted"
+          >
             <Link href="/" className="hover:text-navy">
               Home
             </Link>
-            <span className="mx-2">/</span>
+            <span className="mx-2 text-hairline">/</span>
             <Link href="/products" className="hover:text-navy">
               Products
             </Link>
-            <span className="mx-2">/</span>
+            <span className="mx-2 text-hairline">/</span>
             <span className="text-navy">{product.name}</span>
           </nav>
 
-          <h1 className="mb-8 font-serif text-3xl font-semibold text-navy sm:text-4xl">
-            {product.name}
-          </h1>
-
-          <div className="grid gap-12 lg:grid-cols-2">
+          <div className="grid grid-cols-1 items-start gap-12 lg:grid-cols-[minmax(0,61.8fr)_minmax(0,38.2fr)] lg:gap-16">
             <ProductGallery images={product.images} productName={product.name} />
 
-            <div>
-              <SizeSelector products={allProducts} currentSlug={product.slug} />
+            <div className="lg:sticky lg:top-24 lg:self-start">
+              <p className="font-sans text-[10px] uppercase tracking-[0.22em] text-bronze">
+                Collection 01 · Unglazed vitrified porcelain
+              </p>
+              <h1 className="mt-4 font-serif text-4xl font-light tracking-tight text-navy lg:text-[42px] lg:leading-[1.05]">
+                {product.name}
+              </h1>
+              <p className="mt-6 font-sans text-[15px] tracking-wide text-navy">
+                {formatPKR(product.pricePKR)}
+                <span className="mx-3 text-hairline" aria-hidden="true">
+                  |
+                </span>
+                <span className="text-muted">{formatUSD(product.priceUSD)} USD</span>
+              </p>
+              <div className="mt-8">
+                <SizeSelector products={allProducts} currentSlug={product.slug} />
+              </div>
               <div className="mt-8">
                 <ProductActions product={product} />
               </div>
@@ -148,7 +162,7 @@ export default async function ProductPage({ params }: PageProps) {
                     <table className="w-full text-left">
                       <tbody>
                         {Object.entries(product.specs).map(([key, value]) => (
-                          <tr key={key} className="border-b border-cream">
+                          <tr key={key} className="border-b border-hairline">
                             <th className="py-2 pr-4 font-medium text-navy">{key}</th>
                             <td className="py-2">{value}</td>
                           </tr>
@@ -177,7 +191,7 @@ export default async function ProductPage({ params }: PageProps) {
             />
           </div>
 
-          <p className="mt-8 text-center text-sm text-charcoal/60">
+          <p className="mt-8 text-center font-sans text-[12px] tracking-wide text-muted">
             {product.size} — {formatDiameter(product.diameterCm)}
           </p>
         </div>

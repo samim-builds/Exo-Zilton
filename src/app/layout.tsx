@@ -8,7 +8,7 @@ import "./globals.css";
 const cormorant = Cormorant_Garamond({
   variable: "--font-cormorant",
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+  weight: ["300", "400", "500", "600", "700"],
 });
 
 const inter = Inter({
@@ -44,7 +44,9 @@ export default function RootLayout({
       lang="en"
       className={`${cormorant.variable} ${inter.variable} ${greatVibes.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-white text-charcoal">
+      {/* Browser extensions (e.g. Grammarly) inject attributes on <body> before hydration.
+          This only silences attribute mismatches on <body> itself, not its children. */}
+      <body className="flex min-h-full flex-col bg-porcelain text-charcoal" suppressHydrationWarning>
         {children}
         <Analytics />
       </body>

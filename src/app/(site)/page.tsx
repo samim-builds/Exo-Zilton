@@ -1,6 +1,8 @@
-import { HeroCarousel } from "@/components/home/HeroCarousel";
+import { GrindStory } from "@/components/story/GrindStory";
 import { FeaturedProducts } from "@/components/home/FeaturedProducts";
 import { FeatureGrid } from "@/components/home/FeatureGrid";
+import { ScrollStorytelling } from "@/components/home/ScrollStorytelling";
+import { MaterialComparison } from "@/components/home/MaterialComparison";
 import { BrandBanner } from "@/components/home/BrandBanner";
 import { InstagramFeed } from "@/components/home/InstagramFeed";
 import { TrustBar } from "@/components/home/TrustBar";
@@ -15,10 +17,12 @@ export default function HomePage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <HeroCarousel />
+      <GrindStory />
       <TrustBar />
       <FeaturedProducts />
       <FeatureGrid />
+      <ScrollStorytelling />
+      <MaterialComparison />
       <BrandBanner />
       <InstagramFeed />
     </>

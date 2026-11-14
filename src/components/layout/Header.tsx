@@ -5,9 +5,11 @@ import Link from "next/link";
 import { useState } from "react";
 import { navLinks, siteConfig } from "@/lib/site";
 import { buildGeneralWhatsAppUrl } from "@/lib/whatsapp";
+import { useCart } from "@/components/cart/CartProvider";
 
 export function Header() {
   const [open, setOpen] = useState(false);
+  const { count } = useCart();
 
   return (
     <header className="sticky top-0 z-50 border-b border-cream bg-white/95 backdrop-blur-sm">
@@ -44,11 +46,19 @@ export function Header() {
         </nav>
 
         <div className="flex items-center gap-3">
+          <Link
+            href="/cart"
+            aria-label={`Cart, ${count} item${count === 1 ? "" : "s"}`}
+            className="inline-flex items-center gap-2 border border-hairline px-4 py-2.5 font-sans text-[11px] uppercase tracking-[0.18em] text-navy transition-colors hover:border-bronze"
+          >
+            Cart
+            <span className="text-bronze">{count}</span>
+          </Link>
           <a
             href={buildGeneralWhatsAppUrl()}
             target="_blank"
             rel="noopener noreferrer"
-            className="hidden rounded-full bg-[#25D366] px-5 py-2.5 text-sm font-medium text-white transition-opacity hover:opacity-90 sm:inline-flex"
+            className="hidden border border-navy bg-navy px-5 py-2.5 font-sans text-[11px] uppercase tracking-[0.18em] text-white transition-colors hover:border-bronze sm:inline-flex"
           >
             WhatsApp
           </a>
@@ -83,7 +93,7 @@ export function Header() {
               href={buildGeneralWhatsAppUrl()}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex justify-center rounded-full bg-[#25D366] px-5 py-2.5 text-sm font-medium text-white"
+              className="inline-flex justify-center border border-navy bg-navy px-5 py-2.5 font-sans text-[11px] uppercase tracking-[0.18em] text-white transition-colors hover:border-bronze"
             >
               Order via WhatsApp
             </a>

@@ -10,42 +10,42 @@ type ProductGalleryProps = {
 
 export function ProductGallery({ images, productName }: ProductGalleryProps) {
   const [activeIndex, setActiveIndex] = useState(0);
+  const activeImage = images[activeIndex] ?? images[0];
 
   return (
     <div>
-      <div className="relative aspect-square overflow-hidden rounded-lg bg-porcelain">
-        <Image
-          src={images[activeIndex]}
-          alt={`${productName} — view ${activeIndex + 1}`}
-          fill
-          className="object-contain p-8"
-          sizes="(max-width: 1024px) 100vw, 50vw"
-          priority
-        />
-        <span className="absolute bottom-4 right-4 rounded-full bg-charcoal/60 px-3 py-1 text-xs text-white">
-          {activeIndex + 1}/{images.length}
-        </span>
+      <div className="relative aspect-square overflow-hidden border border-hairline bg-porcelain">
+        {activeImage && (
+          <Image
+            src={activeImage}
+            alt={`${productName} — view ${activeIndex + 1}`}
+            fill
+            className="object-contain p-10 sm:p-14"
+            sizes="(max-width: 1024px) 100vw, 62vw"
+            priority
+          />
+        )}
       </div>
 
-      <div className="mt-4 flex gap-3">
-        {images.map((image, index) => (
-          <button
-            key={image}
-            type="button"
-            onClick={() => setActiveIndex(index)}
-            aria-label={`View image ${index + 1}`}
-            aria-current={activeIndex === index}
-            className={`relative h-20 w-20 overflow-hidden rounded-md border-2 bg-porcelain transition-colors ${activeIndex === index ? "border-navy" : "border-transparent hover:border-gold"}`}
-          >
-            <Image
-              src={image}
-              alt=""
-              fill
-              className="object-contain p-2"
-              sizes="80px"
+      <div className="mt-8 flex items-center gap-4" role="tablist" aria-label="Product views">
+        {images.map((image, index) => {
+          const isActive = activeIndex === index;
+
+          return (
+            <button
+              key={image}
+              type="button"
+              role="tab"
+              onClick={() => setActiveIndex(index)}
+              aria-label={`View image ${index + 1}`}
+              aria-current={isActive ? "true" : undefined}
+              aria-selected={isActive}
+              className={`h-px transition-[width,background-color] duration-300 motion-reduce:transition-none ${
+                isActive ? "w-16 bg-bronze" : "w-8 bg-hairline hover:bg-bronze/70"
+              }`}
             />
-          </button>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
