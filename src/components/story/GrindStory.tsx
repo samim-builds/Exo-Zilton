@@ -16,25 +16,11 @@ import { track } from "@vercel/analytics";
 import { FINALE, STORY, type StoryChapter } from "./story-copy";
 import { CHAPTERS } from "./timeline";
 
-const GrindScene = dynamic(() => import("./GrindScene"), {
-  ssr: false,
-  loading: () => <Poster />,
-});
+// No loading placeholder: the dark stage and headline render instantly, and the
+// scene fades in once its first frame is drawn (see `onReady`).
+const GrindScene = dynamic(() => import("./GrindScene"), { ssr: false });
 
 const EASE = [0.16, 1, 0.3, 1] as const;
-
-function Poster() {
-  return (
-    <Image
-      src="/hero/grind.webp"
-      alt=""
-      fill
-      priority
-      sizes="100vw"
-      className="object-cover opacity-40"
-    />
-  );
-}
 
 function subscribeMedia(query: string) {
   return (onChange: () => void) => {
@@ -227,6 +213,7 @@ export function GrindStory() {
   const reduceMotion = useReducedMotion();
   const section = useRef<HTMLElement>(null);
   const [active, setActive] = useState(true);
+  const [sceneReady, setSceneReady] = useState(false);
   const compact = useMediaQuery("(max-width: 767px)", false);
   const { scrollYProgress } = useScroll({ target: section, offset: ["start start", "end end"] });
 
@@ -248,8 +235,15 @@ export function GrindStory() {
   return (
     <section ref={section} className="relative h-[600vh] bg-[#070d16] md:h-[650vh]" aria-label="The Exo Zilton grinding story">
       <div className="sticky top-0 h-svh overflow-hidden bg-[radial-gradient(ellipse_at_60%_45%,#1b2b42_0%,#0d1929_45%,#070d16_100%)] text-porcelain">
-        <div className="absolute inset-0">
-          <GrindScene progress={scrollYProgress} active={active} compact={compact} />
+        <div
+          className={`absolute inset-0 transition-opacity duration-[1400ms] ease-out ${sceneReady ? "opacity-100" : "opacity-0"}`}
+        >
+          <GrindScene
+            progress={scrollYProgress}
+            active={active}
+            compact={compact}
+            onReady={() => setSceneReady(true)}
+          />
         </div>
         {/* Vignette keeps the copy legible over the scene */}
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_55%,rgba(7,13,22,0.75)_100%)]" />

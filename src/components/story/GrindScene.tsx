@@ -133,13 +133,25 @@ function StudioLights() {
   );
 }
 
+/** Signals once real frames are on screen, so the canvas can fade in without a blank flash. */
+function FirstFrame({ onReady }: { onReady: () => void }) {
+  const frames = useRef(0);
+  useFrame(() => {
+    frames.current += 1;
+    // Wait two frames: the first one compiles shaders and builds the environment map.
+    if (frames.current === 2) onReady();
+  });
+  return null;
+}
+
 export type GrindSceneProps = {
   progress: MotionValue<number>;
   active: boolean;
   compact: boolean;
+  onReady: () => void;
 };
 
-export default function GrindScene({ progress, active, compact }: GrindSceneProps) {
+export default function GrindScene({ progress, active, compact, onReady }: GrindSceneProps) {
   const smoothRef = useRef(progress.get());
 
   return (
@@ -150,6 +162,7 @@ export default function GrindScene({ progress, active, compact }: GrindSceneProp
       gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
       aria-hidden="true"
     >
+      <FirstFrame onReady={onReady} />
       <ProgressDriver source={progress} smoothRef={smoothRef} />
       <CameraRig progress={smoothRef} wide={!compact} />
       <StudioLights />
