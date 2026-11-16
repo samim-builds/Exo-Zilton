@@ -7,25 +7,27 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { MediaPicker } from "@/components/admin/media/MediaPicker";
 import { MediaThumb } from "@/components/admin/media/MediaLibrary";
+import { imagesFor, moveImageWithinGroup } from "@/lib/catalog/variant-editor";
 import { variantTitle } from "@/lib/catalog/variants";
 import type { EditorProps } from "./ProductEditor";
 
+// With several variants this tab holds the photos every variant shares; each
+// variant's own photos are managed in its panel on the Variants tab.
 export function MediaTab({ form, update }: EditorProps) {
   const setImages = (images: typeof form.images) => update((f) => ({ ...f, images }));
-  const move = (i: number, dir: -1 | 1) => {
-    const next = [...form.images];
-    [next[i], next[i + dir]] = [next[i + dir], next[i]];
-    setImages(next);
-  };
-  const hasVariants = form.options.length > 0;
+  const hasVariants = form.variants.length > 1;
+  const shown = hasVariants ? imagesFor(form.images, null) : form.images.map((image, index) => ({ image, index }));
+  const variantPhotoCount = form.images.length - shown.length;
 
   return (
     <Card>
       <CardHeader className="flex flex-row items-start justify-between gap-4">
         <div>
-          <CardTitle>Media</CardTitle>
+          <CardTitle>{hasVariants ? "Shared photos" : "Media"}</CardTitle>
           <CardDescription>
-            The first image is the main one. {hasVariants && "Assign images to a variant to show them when it's selected."}
+            {hasVariants
+              ? `Shown for every variant, after its own photos. ${variantPhotoCount > 0 ? `${variantPhotoCount} more belong to individual variants; edit those on the Variants tab.` : "Add a variant's own photos on the Variants tab."}`
+              : "The first image is the main one."}
           </CardDescription>
         </div>
         <MediaPicker
@@ -43,14 +45,14 @@ export function MediaTab({ form, update }: EditorProps) {
         />
       </CardHeader>
       <CardContent>
-        {form.images.length === 0 ? (
+        {shown.length === 0 ? (
           <p className="rounded-md border border-dashed py-10 text-center text-sm text-muted-foreground">
-            No images yet. Products without images show a placeholder.
+            {hasVariants ? "No shared photos." : "No images yet. Products without images show a placeholder."}
           </p>
         ) : (
           <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {form.images.map((image, i) => (
-              <li key={`${image.url}-${i}`} className="space-y-2 rounded-lg border p-2">
+            {shown.map(({ image, index }, i) => (
+              <li key={`${image.url}-${index}`} className="space-y-2 rounded-lg border p-2">
                 <div className="relative">
                   <MediaThumb item={image} />
                   {i === 0 && (
@@ -61,23 +63,23 @@ export function MediaTab({ form, update }: EditorProps) {
                   aria-label="Alt text"
                   value={image.alt}
                   placeholder="Alt text"
-                  onChange={(e) => setImages(form.images.map((img, j) => (j === i ? { ...img, alt: e.target.value } : img)))}
+                  onChange={(e) => setImages(form.images.map((img, j) => (j === index ? { ...img, alt: e.target.value } : img)))}
                 />
                 {hasVariants && (
                   <Select
-                    value={image.variantKey ?? "all"}
+                    value="all"
                     onValueChange={(v) =>
-                      setImages(form.images.map((img, j) => (j === i ? { ...img, variantKey: v === "all" ? null : v } : img)))
+                      setImages(form.images.map((img, j) => (j === index ? { ...img, variantKey: v === "all" ? null : v } : img)))
                     }
                   >
-                    <SelectTrigger size="sm" className="w-full" aria-label="Variant">
+                    <SelectTrigger size="sm" className="w-full" aria-label="Move to a variant">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">All variants</SelectItem>
+                      <SelectItem value="all">Shared by all variants</SelectItem>
                       {form.variants.map((v) => (
                         <SelectItem key={v.key} value={v.key}>
-                          {variantTitle(v.combo)}
+                          Only {variantTitle(v.combo)}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -85,20 +87,20 @@ export function MediaTab({ form, update }: EditorProps) {
                 )}
                 <div className="flex justify-between">
                   <div className="flex gap-1">
-                    <Button variant="ghost" size="icon-sm" aria-label="Move earlier" disabled={i === 0} onClick={() => move(i, -1)}>
+                    <Button variant="ghost" size="icon-sm" aria-label="Move earlier" disabled={i === 0} onClick={() => setImages(moveImageWithinGroup(form.images, index, -1))}>
                       <ArrowLeft />
                     </Button>
                     <Button
                       variant="ghost"
                       size="icon-sm"
                       aria-label="Move later"
-                      disabled={i === form.images.length - 1}
-                      onClick={() => move(i, 1)}
+                      disabled={i === shown.length - 1}
+                      onClick={() => setImages(moveImageWithinGroup(form.images, index, 1))}
                     >
                       <ArrowRight />
                     </Button>
                   </div>
-                  <Button variant="ghost" size="icon-sm" aria-label="Remove image" onClick={() => setImages(form.images.filter((_, j) => j !== i))}>
+                  <Button variant="ghost" size="icon-sm" aria-label="Remove image" onClick={() => setImages(form.images.filter((_, j) => j !== index))}>
                     <Trash2 />
                   </Button>
                 </div>

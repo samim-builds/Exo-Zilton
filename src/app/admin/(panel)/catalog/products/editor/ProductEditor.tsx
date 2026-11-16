@@ -57,6 +57,7 @@ export function ProductEditor({
   const [form, setForm] = useState(initial);
   const [baseline, setBaseline] = useState(() => JSON.stringify(initial));
   const [tab, setTab] = useState("general");
+  const [variantKey, setVariantKey] = useState<string | null>(initial.variants[0]?.key ?? null);
   const [errors, setErrors] = useState<string[]>([]);
   const [saving, startSaving] = useTransition();
 
@@ -98,6 +99,9 @@ export function ProductEditor({
   }
 
   const variantCount = form.variants.length;
+  const productAttributeCount = attributeDefs.filter((d) => d.scope === "PRODUCT").length;
+  // Photos that belong to a variant are managed in that variant's panel.
+  const sharedPhotoCount = variantCount > 1 ? form.images.filter((img) => !img.variantKey).length : form.images.length;
 
   return (
     <div>
@@ -137,14 +141,14 @@ export function ProductEditor({
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="mb-4 flex-wrap">
           <TabsTrigger value="general">General</TabsTrigger>
-          <TabsTrigger value="media">Media ({form.images.length})</TabsTrigger>
           {isBundle ? (
             <TabsTrigger value="contents">Contents and price ({form.bundle?.items.length ?? 0})</TabsTrigger>
           ) : (
-            <>
-              <TabsTrigger value="variants">Variants ({variantCount})</TabsTrigger>
-              <TabsTrigger value="attributes">Attributes{attributeDefs.length > 0 ? ` (${attributeDefs.length})` : ""}</TabsTrigger>
-            </>
+            <TabsTrigger value="variants">{variantCount > 1 ? `Variants (${variantCount})` : "Price and stock"}</TabsTrigger>
+          )}
+          <TabsTrigger value="media">Media ({isBundle ? form.images.length : sharedPhotoCount})</TabsTrigger>
+          {!isBundle && (
+            <TabsTrigger value="attributes">Attributes{productAttributeCount > 0 ? ` (${productAttributeCount})` : ""}</TabsTrigger>
           )}
           <TabsTrigger value="seo">SEO</TabsTrigger>
         </TabsList>
@@ -161,7 +165,7 @@ export function ProductEditor({
         ) : (
           <>
             <TabsContent value="variants">
-              <VariantsTab form={form} update={update} />
+              <VariantsTab form={form} update={update} defs={attributeDefs} selectedKey={variantKey} onSelect={setVariantKey} />
             </TabsContent>
             <TabsContent value="attributes">
               <AttributesTab form={form} update={update} defs={attributeDefs} />
