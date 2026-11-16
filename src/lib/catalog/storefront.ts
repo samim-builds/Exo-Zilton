@@ -1,3 +1,4 @@
+import type { CartItem } from "@/lib/cart";
 import type { CatalogProduct, CatalogVariant, Product, ProductImageView } from "@/lib/product-types";
 import { slugifyOptionValue } from "./variants";
 import { bundleAvailability, bundlePricing, type BundlePricingMode } from "./bundles";
@@ -276,6 +277,7 @@ export function flattenCatalog(products: CatalogProduct[]): Product[] {
       href: variantHref(product, variant),
       slug: product.slug,
       name: product.options.length > 0 && variant.title ? `${product.name} - ${variant.title}` : product.name,
+      productName: product.name,
       sku: variant.sku,
       size: variant.title,
       diameterCm: variant.diameterCm,
@@ -295,6 +297,20 @@ export function flattenCatalog(products: CatalogProduct[]): Product[] {
       deliveryInfo: product.deliveryInfo,
     })),
   );
+}
+
+/** The cart line for one listing card: the same line the product page adds for that variant. */
+export function cardCartLine(card: Product): Omit<CartItem, "quantity"> {
+  return {
+    key: card.variantKey,
+    href: card.href,
+    name: card.productName ?? card.name,
+    variantTitle: card.size,
+    sku: card.sku,
+    image: card.images[0],
+    pricePKR: card.pricePKR,
+    priceUSD: card.priceUSD,
+  };
 }
 
 /** Slugs of a category and every category below it (cycle-safe). */

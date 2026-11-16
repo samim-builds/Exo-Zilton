@@ -40,7 +40,7 @@ export function VariantSelector({ product, current }: VariantSelectorProps) {
                   "flex min-h-14 flex-col justify-center rounded-[6px] border px-3 py-2.5 text-left transition-colors",
                   // On phones an odd last option spans both columns instead of sitting alone.
                   count % 2 === 1 && index === count - 1 && "col-span-2 sm:col-span-1",
-                  isActive ? "border-ink bg-white ring-1 ring-ink" : "border-ink/15 bg-white hover:border-ink/40",
+                  isActive ? "border-ink bg-surface ring-1 ring-ink" : "border-ink/15 bg-surface hover:border-ink/40",
                   soldOut && !isActive && "text-stone",
                 );
                 const content = (

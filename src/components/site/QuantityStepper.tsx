@@ -18,7 +18,7 @@ export function QuantityStepper({ value, onChange, min = 1, max = 99, label = "Q
   const box = size === "sm" ? "size-9" : "size-11";
   const step = cn(box, "flex items-center justify-center text-ink hover:bg-ink/[0.04] disabled:opacity-30");
   return (
-    <div role="group" aria-label={label} className={cn("inline-flex items-center rounded-[6px] border border-ink/20 bg-white", className)}>
+    <div role="group" aria-label={label} className={cn("inline-flex items-center rounded-[6px] border border-ink/20 bg-surface", className)}>
       <button type="button" className={step} onClick={() => onChange(clamp(value - 1))} disabled={value <= min} aria-label="Decrease quantity">
         <Minus className="size-4" />
       </button>

@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import type { Product } from "@/lib/product-types";
 import { Price } from "@/components/site/Price";
+import { CardAddToCart } from "./CardAddToCart";
 
 type ProductCardProps = {
   product: Product;
@@ -14,9 +15,9 @@ export function ProductCard({ product }: ProductCardProps) {
   const sizes = "(max-width: 1024px) 50vw, 25vw";
 
   return (
-    <article>
-      <Link href={product.href} className="group block rounded-[2px] focus-visible:outline-offset-4">
-        <div className="relative aspect-[4/5] overflow-hidden rounded-[2px] bg-white">
+    <article className="flex flex-col">
+      <Link href={product.href} className="group block flex-1 rounded-[2px] focus-visible:outline-offset-4">
+        <div className="relative aspect-[4/5] overflow-hidden rounded-[2px] bg-frame photo-frame">
           {primary && (
             <Image
               src={primary}
@@ -60,6 +61,7 @@ export function ProductCard({ product }: ProductCardProps) {
           />
         </div>
       </Link>
+      <CardAddToCart product={product} />
     </article>
   );
 }

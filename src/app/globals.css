@@ -8,6 +8,11 @@
   --stone: #6a655d;
   --bronze: #8f6e3e;
   --beech: #c8a57b;
+  /* Roles that keep their look in both themes. */
+  --night: #14233a; /* always-dark bands: announcement, story, banner, footer */
+  --on-night: #faf9f7;
+  --surface: #ffffff; /* form fields and steppers */
+  --frame: #ffffff; /* behind product photos, which have white backgrounds */
   /* Legacy names, kept as aliases while components move to the tokens above. */
   --navy: var(--ink);
   --charcoal: var(--ink);
@@ -21,7 +26,32 @@
   --muted: var(--stone);
 }
 
+/* Shop dark theme. The admin panel (.admin-root) always stays light. Set by
+   themeInitScript from the saved choice or the device setting. Deep navy
+   rather than black keeps the brand; ink becomes warm porcelain text. */
+:root[data-theme="dark"]:not(:has(.admin-root)) {
+  color-scheme: dark;
+  --porcelain: #0f1826;
+  --glaze: #24334a;
+  --ink: #eeeae3;
+  --stone: #a9a297;
+  --bronze: #cfab76;
+  --beech: #d6b78f;
+  --night: #172539;
+  --on-night: #eeeae3;
+  --surface: #162236;
+}
+
+/* White-ground photos are dimmed as a whole tile, so no seam shows. */
+:root[data-theme="dark"]:not(:has(.admin-root)) .photo-frame {
+  filter: brightness(0.9);
+}
+
 @theme inline {
+  --color-night: var(--night);
+  --color-on-night: var(--on-night);
+  --color-surface: var(--surface);
+  --color-frame: var(--frame);
   --color-ink: var(--ink);
   --color-glaze: var(--glaze);
   --color-stone: var(--stone);

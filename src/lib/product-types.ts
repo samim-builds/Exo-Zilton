@@ -59,6 +59,8 @@ export type Product = {
   href: string;
   slug: string;
   name: string;
+  /** The product's own name, without the size (cart lines show the size separately). */
+  productName?: string;
   sku: string;
   size: string;
   diameterCm: number;

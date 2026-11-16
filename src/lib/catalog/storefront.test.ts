@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  cardCartLine,
   categorySubtree,
   findByLegacySlug,
   flattenCatalog,
@@ -351,5 +352,22 @@ describe("toCatalogProducts with bundles", () => {
 
   it("leaves standard products without bundle contents", () => {
     expect(toCatalogProducts([base])[0].bundle).toBeUndefined();
+  });
+});
+
+describe("cardCartLine", () => {
+  const [card] = flattenCatalog(toCatalogProducts([base]));
+
+  it("builds the same cart line the product page adds for that variant", () => {
+    expect(cardCartLine(card)).toEqual({
+      key: "v1",
+      href: "/products/mortar-and-pestle?size=size-1",
+      name: "Mortar and Pestle",
+      variantTitle: "Size 1",
+      sku: card.sku,
+      image: card.images[0],
+      pricePKR: card.pricePKR,
+      priceUSD: card.priceUSD,
+    });
   });
 });
