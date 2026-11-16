@@ -3,29 +3,9 @@
 import { useRef } from "react";
 import Image from "next/image";
 import { motion, useScroll, useTransform } from "framer-motion";
+import type { SectionData } from "@/lib/cms/sections";
 
-const PILLARS = [
-  {
-    step: "01",
-    tag: "MOLECULAR DENSITY",
-    title: "Fired at 1,300°C for Absolute Vitrification",
-    desc: "At peak kiln temperatures, porcelain clay fusions into a dense, non-porous glass structure. Unlike granite or marble, it will never absorb garlic essential oils, vinegar, or turmeric stains.",
-  },
-  {
-    step: "02",
-    tag: "TEXTURE & TOOTH",
-    title: "Matte Bisque Interior for Pure Shearing Power",
-    desc: "Glazed bowls cause whole spices to skate and bounce. Our unglazed interior provides the precise micro-abrasive tooth needed to crush hard peppercorns into fine powders and emulsify smooth pesto pastes.",
-  },
-  {
-    step: "03",
-    tag: "TACTILE BALANCE",
-    title: "Ergonomic Turned Beechwood Grip",
-    desc: "A hybrid design that marries the heavy downward inertia of dense porcelain with the warmth and leverage of natural European beechwood. Reduces wrist fatigue during extended culinary prep.",
-  },
-];
-
-export function ScrollStorytelling() {
+export function ScrollStorytelling({ data }: { data: SectionData<"scroll-story"> }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({
     target: containerRef,
@@ -49,10 +29,10 @@ export function ScrollStorytelling() {
           className="text-center max-w-xl mx-auto mb-20"
         >
           <span className="text-[11px] font-sans uppercase tracking-[0.3em] text-[#C29B62]">
-            Engineering & Craft
+            {data.eyebrow}
           </span>
           <h2 className="font-serif text-3xl sm:text-5xl font-normal mt-3 tracking-tight">
-            The Anatomy of Pure Grinding
+            {data.title}
           </h2>
         </motion.div>
 
@@ -61,7 +41,7 @@ export function ScrollStorytelling() {
           
           {/* Left Column: Sequential Story Cards */}
           <div className="lg:col-span-6 space-y-28 sm:space-y-40 py-10">
-            {PILLARS.map((item, idx) => (
+            {data.pillars.map((item, idx) => (
               <motion.article
                 key={idx}
                 initial={{ opacity: 0, y: 40 }}
@@ -80,7 +60,7 @@ export function ScrollStorytelling() {
                   {item.title}
                 </h3>
                 <p className="mt-4 text-sm sm:text-base text-[#F9F8F5]/70 leading-relaxed font-sans max-w-md">
-                  {item.desc}
+                  {item.body}
                 </p>
               </motion.article>
             ))}
@@ -93,8 +73,8 @@ export function ScrollStorytelling() {
               className="relative aspect-square w-full rounded-sm overflow-hidden border border-[#F9F8F5]/10 bg-[#16253B] shadow-2xl"
             >
               <Image
-                src="/hero/grind.webp"
-                alt="Exo Zilton Vitrified Porcelain Anatomy"
+                src={data.image}
+                alt={data.imageAlt}
                 fill
                 sizes="(max-width: 1024px) 100vw, 50vw"
                 className="object-cover"
@@ -102,8 +82,8 @@ export function ScrollStorytelling() {
               
               {/* Subtle ambient luxury badge */}
               <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between border-t border-white/10 pt-3 text-[10px] uppercase tracking-widest text-[#F9F8F5]/60 backdrop-blur-xs">
-                <span>Vitrified Bisque Porcelain</span>
-                <span>Fired at 1,300°C</span>
+                <span>{data.badgeLeft}</span>
+                <span>{data.badgeRight}</span>
               </div>
             </motion.div>
           </div>

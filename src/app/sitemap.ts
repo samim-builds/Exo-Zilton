@@ -2,6 +2,7 @@ import type { MetadataRoute } from "next";
 import { siteConfig } from "@/lib/site";
 import { getCatalog, getCategories } from "@/lib/products";
 import { variantHref } from "@/lib/catalog/storefront";
+import { getPublishedPageSlugs } from "@/lib/cms/server";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = siteConfig.url;
@@ -16,7 +17,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     page(path, path === "" ? 1 : 0.8),
   );
 
-  const [catalog, categories] = await Promise.all([getCatalog(), getCategories()]);
+  const [catalog, categories, customPages] = await Promise.all([getCatalog(), getCategories(), getPublishedPageSlugs()]);
   const productPages = catalog.flatMap((product) => [
     page(`/products/${product.slug}`, 0.9),
     // Each variant has its own indexable URL (?size=size-3).
@@ -24,5 +25,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ]);
   const categoryPages = categories.map((c) => page(`/categories/${c.slug}`, 0.8));
 
-  return [...staticPages, ...categoryPages, ...productPages];
+  const contentPages = customPages.map((p) => ({ ...page(`/${p.slug}`, 0.6), lastModified: p.updatedAt }));
+
+  return [...staticPages, ...categoryPages, ...productPages, ...contentPages];
 }

@@ -6,6 +6,8 @@ import { VariantSelector } from "@/components/products/VariantSelector";
 import { ProductActions } from "@/components/products/ProductActions";
 import { ProductAccordion } from "@/components/products/ProductAccordion";
 import { BrandBanner } from "@/components/home/BrandBanner";
+import { getPage } from "@/lib/cms/server";
+import { sectionDefaults } from "@/lib/cms/sections";
 import { lookupProduct, type CatalogProduct, type CatalogVariant } from "@/lib/products";
 import { resolveVariant, variantHref } from "@/lib/catalog/storefront";
 import { buildMetadata, productGroupJsonLd, breadcrumbJsonLd, faqJsonLd } from "@/lib/seo";
@@ -60,6 +62,9 @@ export async function generateMetadata(props: PageProps): Promise<Metadata> {
 
 export default async function ProductPage(props: PageProps) {
   const { product, variant, href } = await resolvePage(props);
+  // The product page reuses the homepage brand banner so both stay in step.
+  const homeBanner = (await getPage("home"))?.sections.find((s) => s.type === "brand-banner");
+  const banner = homeBanner?.type === "brand-banner" ? homeBanner.data : sectionDefaults("brand-banner");
 
   const productLd = productGroupJsonLd(product);
   const breadcrumbLd = breadcrumbJsonLd([
@@ -219,7 +224,7 @@ export default async function ProductPage(props: PageProps) {
         </div>
       </div>
 
-      <BrandBanner />
+      <BrandBanner data={banner} />
     </>
   );
 }

@@ -3,11 +3,11 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
-import { navLinks, siteConfig } from "@/lib/site";
+import type { SiteSettings } from "@/lib/cms/settings";
 import { buildGeneralWhatsAppUrl } from "@/lib/whatsapp";
 import { useCart } from "@/components/cart/CartProvider";
 
-export function Header() {
+export function Header({ contact, links }: { contact: SiteSettings["contact"]; links: SiteSettings["navigation"]["header"] }) {
   const [open, setOpen] = useState(false);
   const { count } = useCart();
 
@@ -17,7 +17,7 @@ export function Header() {
         <Link href="/" className="flex items-center gap-3" onClick={() => setOpen(false)}>
           <Image
             src="/brand/logo.png"
-            alt={`${siteConfig.name} logo`}
+            alt={`${contact.siteName} logo`}
             width={48}
             height={48}
             priority
@@ -25,16 +25,16 @@ export function Header() {
           />
           <div className="hidden sm:block">
             <p className="font-serif text-lg font-semibold tracking-wide text-navy">
-              {siteConfig.name}
+              {contact.siteName}
             </p>
             <p className="text-xs uppercase tracking-[0.2em] text-gold">
-              {siteConfig.tagline}
+              {contact.tagline}
             </p>
           </div>
         </Link>
 
         <nav className="hidden items-center gap-8 md:flex" aria-label="Main navigation">
-          {navLinks.map((link) => (
+          {links.map((link) => (
             <Link
               key={link.href}
               href={link.href}
@@ -79,7 +79,7 @@ export function Header() {
       {open && (
         <nav className="border-t border-cream bg-white px-4 py-4 md:hidden" aria-label="Mobile navigation">
           <div className="flex flex-col gap-4">
-            {navLinks.map((link) => (
+            {links.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}

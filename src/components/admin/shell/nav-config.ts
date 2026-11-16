@@ -6,6 +6,9 @@ import {
   LayoutDashboard,
   Package,
   Gift,
+  FileText,
+  Mail,
+  Settings,
   TicketPercent,
   type LucideIcon,
 } from "lucide-react";
@@ -33,15 +36,22 @@ export const adminNav: AdminNavGroup[] = [
     items: [
       { href: "/admin/marketing/discounts", label: "Discounts", icon: TicketPercent },
       { href: "/admin/marketing/vouchers", label: "Gift vouchers", icon: Gift },
+      { href: "/admin/marketing/subscribers", label: "Subscribers", icon: Mail },
     ],
   },
   {
     label: "Content",
-    items: [{ href: "/admin/media", label: "Media library", icon: Images }],
+    items: [
+      { href: "/admin/content/pages", label: "Pages", icon: FileText },
+      { href: "/admin/media", label: "Media library", icon: Images },
+    ],
   },
   {
     label: "System",
-    items: [{ href: "/admin/activity", label: "Activity log", icon: History }],
+    items: [
+      { href: "/admin/settings", label: "Settings", icon: Settings },
+      { href: "/admin/activity", label: "Activity log", icon: History },
+    ],
   },
 ];
 
@@ -55,6 +65,10 @@ export const segmentLabels: Record<string, string> = {
   marketing: "Marketing",
   discounts: "Discounts",
   vouchers: "Gift vouchers",
+  subscribers: "Subscribers",
+  content: "Content",
+  pages: "Pages",
+  settings: "Settings",
   media: "Media library",
   activity: "Activity log",
   new: "New",

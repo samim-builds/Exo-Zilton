@@ -1,12 +1,15 @@
-import { HeroCarousel } from "@/components/home/HeroCarousel";
-import { FeaturedProducts } from "@/components/home/FeaturedProducts";
-import { FeatureGrid } from "@/components/home/FeatureGrid";
-import { ScrollStorytelling } from "@/components/home/ScrollStorytelling";
-import { MaterialComparison } from "@/components/home/MaterialComparison";
-import { BrandBanner } from "@/components/home/BrandBanner";
-import { InstagramFeed } from "@/components/home/InstagramFeed";
-import { TrustBar } from "@/components/home/TrustBar";
+import type { Metadata } from "next";
+import { CmsPage } from "@/components/cms/CmsPage";
+import { getPage } from "@/lib/cms/server";
 import { organizationJsonLd } from "@/lib/seo";
+
+export async function generateMetadata(): Promise<Metadata> {
+  const page = await getPage("home");
+  return {
+    ...(page?.seoTitle ? { title: page.seoTitle } : {}),
+    ...(page?.seoDescription ? { description: page.seoDescription } : {}),
+  };
+}
 
 export default function HomePage() {
   const jsonLd = organizationJsonLd();
@@ -17,14 +20,7 @@ export default function HomePage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <HeroCarousel />
-      <TrustBar />
-      <FeaturedProducts />
-      <FeatureGrid />
-      <ScrollStorytelling />
-      <MaterialComparison />
-      <BrandBanner />
-      <InstagramFeed />
+      <CmsPage slug="home" plain />
     </>
   );
 }

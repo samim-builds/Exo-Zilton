@@ -414,3 +414,44 @@ model VoucherTransaction {
 
   @@index([voucherId, createdAt])
 }
+
+enum PageStatus {
+  DRAFT
+  PUBLISHED
+}
+
+// A CMS page. Sections live as an ordered JSON array validated by the section
+// registry (src/lib/cms/sections.ts); unpublished edits sit in draftSections.
+model Page {
+  id             String     @id @default(cuid())
+  slug           String     @unique
+  title          String
+  isSystem       Boolean    @default(false)
+  status         PageStatus @default(DRAFT)
+  sections       Json       @default("[]")
+  draftSections  Json?
+  seoTitle       String?
+  seoDescription String?
+  ogImageUrl     String?
+  publishedAt    DateTime?
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+}
+
+// Site-wide settings, one row per group ("contact", "navigation", "announcement", "welcomeOffer").
+model SiteSetting {
+  key       String   @id
+  value     Json
+  updatedAt DateTime @updatedAt
+}
+
+model Subscriber {
+  id                String   @id @default(cuid())
+  email             String   @unique
+  source            String   @default("welcome-popup")
+  consent           Boolean  @default(true)
+  welcomeDiscountId String?
+  createdAt         DateTime @default(now())
+
+  @@index([createdAt])
+}

@@ -1,7 +1,9 @@
 import Image from "next/image";
 import Script from "next/script";
 import { Reveal } from "@/components/shared/Reveal";
-import { siteConfig, getInstagramUrl } from "@/lib/site";
+import { siteConfig } from "@/lib/site";
+import { instagramUrl } from "@/lib/cms/settings";
+import type { SectionData } from "@/lib/cms/sections";
 import { instagramPosts, getInstagramPostUrl } from "@/lib/instagram";
 
 function InstagramIcon({ className }: { className?: string }) {
@@ -24,15 +26,14 @@ function InstagramIcon({ className }: { className?: string }) {
   );
 }
 
-function InstagramGrid() {
-  const profileUrl = getInstagramUrl();
+function InstagramGrid({ handle }: { handle: string }) {
 
   return (
     <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3 lg:grid-cols-6">
       {instagramPosts.map((post) => (
         <a
           key={post.id}
-          href={getInstagramPostUrl(siteConfig.instagramHandle, post)}
+          href={getInstagramPostUrl(handle, post)}
           target="_blank"
           rel="noopener noreferrer"
           className="group relative aspect-square overflow-hidden rounded-md bg-navy/20"
@@ -67,8 +68,8 @@ function ElfsightFeed() {
   );
 }
 
-export function InstagramFeed() {
-  const profileUrl = getInstagramUrl();
+export function InstagramFeed({ data, handle }: { data: SectionData<"instagram-feed">; handle: string }) {
+  const profileUrl = instagramUrl(handle);
   const useElfsight = Boolean(siteConfig.elfsightWidgetId);
 
   return (
@@ -84,12 +85,12 @@ export function InstagramFeed() {
             aria-hidden="true"
           />
           <Reveal>
-            <p className="text-sm uppercase tracking-[0.3em] text-gold">Stay Connected</p>
+            <p className="text-sm uppercase tracking-[0.3em] text-gold">{data.eyebrow}</p>
             <h2
               id="instagram-heading"
               className="mt-3 font-serif text-2xl font-semibold text-white sm:text-3xl"
             >
-              Follow our Instagram journey...
+              {data.title}
             </h2>
           </Reveal>
           <a
@@ -99,11 +100,11 @@ export function InstagramFeed() {
             className="mt-4 inline-flex items-center gap-2 text-sm text-white/80 transition-colors hover:text-white"
           >
             <InstagramIcon className="h-5 w-5" />
-            @{siteConfig.instagramHandle.replace(/^@/, "")}
+            @{handle.replace(/^@/, "")}
           </a>
         </div>
 
-        {useElfsight ? <ElfsightFeed /> : <InstagramGrid />}
+        {useElfsight ? <ElfsightFeed /> : <InstagramGrid handle={handle} />}
 
         <div className="mt-10 flex justify-center">
           <a
