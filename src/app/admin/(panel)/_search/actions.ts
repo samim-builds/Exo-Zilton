@@ -4,6 +4,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { adminAction } from "@/lib/admin/action";
 import { parseSearch } from "@/lib/admin/search";
+import { productEditHref } from "@/components/admin/shell/nav-config";
 
 export type SearchHit = { id: string; label: string; detail: string; href: string };
 export type SearchResults = { products: SearchHit[]; orders: SearchHit[]; pages: SearchHit[] };
@@ -42,7 +43,7 @@ export const searchAdmin = adminAction(z.object({ q: z.string().max(200) }), asy
       id: p.id,
       label: p.name,
       detail: `${p.kind === "BUNDLE" ? "Bundle" : "Product"} · ${titleCase(p.status)}`,
-      href: `/admin/catalog/products/${p.id}`,
+      href: productEditHref(p.id, p.kind),
     })),
     orders: orders.map((o) => ({ id: o.id, label: `Order #${o.number}`, detail: `${o.name} · ${titleCase(o.status)}`, href: `/admin/orders/${o.id}` })),
     pages: pages.map((p) => ({ id: p.slug, label: p.title, detail: `/${p.slug === "home" ? "" : p.slug}`, href: `/admin/content/pages/${p.slug}` })),

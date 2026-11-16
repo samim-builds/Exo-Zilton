@@ -44,13 +44,20 @@ export function ProductCard({ product }: ProductCardProps) {
           <h3 className="font-sans text-[0.9375rem] font-medium text-ink group-hover:underline group-hover:decoration-ink/30 group-hover:underline-offset-4">
             {product.name}
           </h3>
+          {product.bundleItemCount !== undefined && <p className="text-sm text-stone">Set of {product.bundleItemCount}</p>}
           {product.diameterCm > 0 && (
             <p className="text-sm text-stone">
               {product.diameterCm} cm
               {product.capacityMl > 0 && `, ${product.capacityMl} ml`}
             </p>
           )}
-          <Price pricePKR={product.pricePKR} priceUSD={product.priceUSD} className="pt-1" />
+          <Price
+            pricePKR={product.pricePKR}
+            priceUSD={product.priceUSD}
+            compareAtPKR={product.compareAtPKR}
+            compareAtUSD={product.compareAtUSD}
+            className="pt-1"
+          />
         </div>
       </Link>
     </article>

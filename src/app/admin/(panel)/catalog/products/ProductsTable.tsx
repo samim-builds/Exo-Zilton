@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ColumnHeader } from "@/components/admin/data-table/ColumnHeader";
 import { DataTable } from "@/components/admin/data-table/DataTable";
+import { productEditHref } from "@/components/admin/shell/nav-config";
 import { MediaThumb } from "@/components/admin/media/MediaLibrary";
 import type { ProductListRow } from "@/lib/catalog/admin-queries";
 import { formatPriceRange } from "@/lib/catalog/pricing";
@@ -49,7 +50,7 @@ function RowActions({ row }: { row: ProductListRow }) {
       const res = await duplicateProduct({ id: row.id });
       if (!res.ok) return void toast.error(res.error);
       toast.success("Draft copy created");
-      router.push(`/admin/catalog/products/${res.data.id}`);
+      router.push(productEditHref(res.data.id, row.kind));
     });
   }
 
@@ -62,7 +63,7 @@ function RowActions({ row }: { row: ProductListRow }) {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         <DropdownMenuItem asChild>
-          <Link href={`/admin/catalog/products/${row.id}`}>
+          <Link href={productEditHref(row.id, row.kind)}>
             <Pencil />
             Edit
           </Link>
@@ -87,7 +88,7 @@ const columns: ColumnDef<ProductListRow>[] = [
     id: "name",
     header: () => <ColumnHeader id="name" title="Product" />,
     cell: ({ row }) => (
-      <Link href={`/admin/catalog/products/${row.original.id}`} className="flex items-center gap-3">
+      <Link href={productEditHref(row.original.id, row.original.kind)} className="flex items-center gap-3">
         {row.original.image ? (
           <MediaThumb item={{ url: row.original.image, alt: row.original.name }} className="size-10 shrink-0" />
         ) : (

@@ -84,3 +84,8 @@ export const segmentLabels: Record<string, string> = {
 export function isActive(pathname: string, href: string): boolean {
   return href === "/admin" ? pathname === "/admin" : pathname === href || pathname.startsWith(`${href}/`);
 }
+
+/** Editor URL for a product; bundles have their own section. */
+export function productEditHref(id: string, kind: "STANDARD" | "BUNDLE"): string {
+  return `/admin/catalog/${kind === "BUNDLE" ? "bundles" : "products"}/${id}`;
+}

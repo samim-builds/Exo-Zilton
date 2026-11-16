@@ -249,6 +249,24 @@ describe("flattenCatalog", () => {
     );
     expect(card.name).toBe("Mortar and Pestle");
   });
+
+  it("carries compare-at prices so cards can show the saving", () => {
+    expect(cards.map((c) => [c.compareAtPKR, c.compareAtUSD])).toEqual([
+      [3500, null],
+      [null, null],
+    ]);
+  });
+
+  it("counts the items in a bundle and leaves it unset for products", () => {
+    const [bundle] = flattenCatalog([
+      {
+        ...toCatalogProducts([base])[0],
+        bundle: { items: [{ variantId: "a", sku: "A", name: "A", quantity: 2, href: "/products/a" }, { variantId: "b", sku: "B", name: "B", quantity: 1, href: "/products/b" }] },
+      },
+    ]);
+    expect(bundle.bundleItemCount).toBe(3);
+    expect(cards[0].bundleItemCount).toBeUndefined();
+  });
 });
 
 describe("categorySubtree", () => {

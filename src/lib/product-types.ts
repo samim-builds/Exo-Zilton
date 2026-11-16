@@ -65,6 +65,10 @@ export type Product = {
   capacityMl: number;
   pricePKR: number;
   priceUSD: number;
+  compareAtPKR?: number | null;
+  compareAtUSD?: number | null;
+  /** Bundles only: how many items one bundle holds. */
+  bundleItemCount?: number;
   inStock: boolean;
   images: string[];
   imageAlts?: ProductImageView[];

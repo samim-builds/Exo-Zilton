@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import { ClipboardList, FileText, Package, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,9 @@ import { adminNav } from "./nav-config";
 const navItems = adminNav.flatMap((group) => group.items);
 const none: SearchResults = { products: [], orders: [], pages: [] };
 
+const noSubscribe = () => () => {};
+const isApple = () => /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
+
 // ⌘K / Ctrl+K: jump to an admin page, or find a product, order or page.
 export function CommandPalette() {
   const router = useRouter();
@@ -26,6 +29,8 @@ export function CommandPalette() {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<{ q: string; data: SearchResults }>({ q: "", data: none });
   const [highlighted, setHighlighted] = useState("");
+  // The server can't know the platform; it renders "Ctrl K" and Apple devices switch after hydration.
+  const apple = useSyncExternalStore(noSubscribe, isApple, () => false);
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -93,7 +98,7 @@ export function CommandPalette() {
       >
         <Search />
         <span className="hidden sm:inline">Search…</span>
-        <kbd className="ml-auto hidden rounded border bg-muted px-1.5 font-sans text-[11px] sm:inline">Ctrl K</kbd>
+        <kbd className="ml-auto hidden rounded border bg-muted px-1.5 font-sans text-[11px] sm:inline">{apple ? "⌘K" : "Ctrl K"}</kbd>
       </Button>
       <CommandDialog
         open={open}

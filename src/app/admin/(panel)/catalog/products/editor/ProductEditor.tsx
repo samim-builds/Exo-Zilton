@@ -12,6 +12,7 @@ import { effectiveAttributes, type AttributeDef } from "@/lib/catalog/attributes
 import type { ProductInput } from "@/lib/catalog/schemas";
 import type { BundleComponentOption } from "@/lib/catalog/admin-queries";
 import { saveProduct } from "../actions";
+import { productEditHref } from "@/components/admin/shell/nav-config";
 import { STATUS_STYLES } from "../ProductsTable";
 import { AttributesTab } from "./AttributesTab";
 import { BundleTab } from "./BundleTab";
@@ -91,7 +92,7 @@ export function ProductEditor({
       setErrors([]);
       setBaseline(JSON.stringify(form));
       toast.success(`${isBundle ? "Bundle" : "Product"} ${res.data.created ? "created" : "saved"}`);
-      if (res.data.created) router.replace(`/admin/catalog/products/${res.data.id}`);
+      if (res.data.created) router.replace(productEditHref(res.data.id, isBundle ? "BUNDLE" : "STANDARD"));
       else router.refresh();
     });
   }
