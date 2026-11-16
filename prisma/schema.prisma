@@ -104,3 +104,52 @@ model ProductImage {
   alt       String
   sortOrder Int     @default(0)
 }
+
+enum ActivityAction {
+  CREATE
+  UPDATE
+  DELETE
+  PUBLISH
+  STATUS
+}
+
+// Audit trail of admin changes. There is one shared admin login, so entries
+// record the request origin rather than a user.
+model ActivityLog {
+  id         String         @id @default(cuid())
+  entityType String
+  entityId   String
+  action     ActivityAction
+  summary    String
+  diff       Json?
+  ip         String?
+  userAgent  String?
+  createdAt  DateTime       @default(now())
+
+  @@index([entityType, entityId])
+  @@index([createdAt])
+}
+
+model MediaAsset {
+  id        String   @id @default(cuid())
+  url       String   @unique
+  pathname  String
+  alt       String   @default("")
+  mime      String
+  size      Int
+  width     Int?
+  height    Int?
+  folder    String   @default("general")
+  createdAt DateTime @default(now())
+
+  @@index([folder, createdAt])
+}
+
+model LoginAttempt {
+  id        String   @id @default(cuid())
+  ip        String
+  success   Boolean
+  createdAt DateTime @default(now())
+
+  @@index([ip, createdAt])
+}

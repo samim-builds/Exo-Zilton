@@ -2,6 +2,11 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 export function AdminLoginForm() {
   const [password, setPassword] = useState("");
@@ -21,7 +26,7 @@ export function AdminLoginForm() {
     });
 
     if (!res.ok) {
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
       setError(data.error ?? "Login failed");
       setLoading(false);
       return;
@@ -32,35 +37,41 @@ export function AdminLoginForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-4 rounded-lg border border-charcoal/10 bg-white p-8 shadow-sm">
-      <div>
-        <h1 className="font-serif text-2xl font-semibold text-navy">Admin Login</h1>
-        <p className="mt-1 text-sm text-charcoal/70">Manage products, photos, and details</p>
-      </div>
-
-      <div>
-        <label htmlFor="password" className="mb-1 block text-sm font-medium text-navy">
-          Password
-        </label>
-        <input
-          id="password"
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="w-full rounded-md border border-charcoal/20 px-4 py-3 text-sm focus:border-navy focus:outline-none focus:ring-1 focus:ring-navy"
-          required
-        />
-      </div>
-
-      {error && <p className="text-sm text-red-600">{error}</p>}
-
-      <button
-        type="submit"
-        disabled={loading}
-        className="w-full rounded-full bg-navy px-4 py-3 text-sm uppercase tracking-widest text-white disabled:opacity-50"
-      >
-        {loading ? "Signing in..." : "Sign in"}
-      </button>
-    </form>
+    <Card className="w-full max-w-sm">
+      <CardHeader>
+        <div className="mb-2 flex size-10 items-center justify-center rounded-md bg-primary font-serif text-lg font-semibold text-primary-foreground">
+          EZ
+        </div>
+        <CardTitle className="text-xl">Exo Zilton Admin</CardTitle>
+        <CardDescription>Sign in to manage orders, catalog and content.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="password">Password</Label>
+            <Input
+              id="password"
+              type="password"
+              autoComplete="current-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              aria-invalid={Boolean(error)}
+              aria-describedby={error ? "login-error" : undefined}
+              required
+              autoFocus
+            />
+          </div>
+          {error && (
+            <p id="login-error" role="alert" className="text-sm text-destructive">
+              {error}
+            </p>
+          )}
+          <Button type="submit" className="w-full" disabled={loading}>
+            {loading && <Loader2 className="animate-spin" />}
+            {loading ? "Signing in…" : "Sign in"}
+          </Button>
+        </form>
+      </CardContent>
+    </Card>
   );
 }

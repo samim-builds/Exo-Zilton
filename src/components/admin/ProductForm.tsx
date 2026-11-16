@@ -4,6 +4,8 @@ import Image from "next/image";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { ProductWithId } from "@/lib/product-types";
+import type { MediaItem } from "@/lib/media-types";
+import { MediaPicker } from "@/components/admin/media/MediaPicker";
 
 type ImageField = { url: string; alt: string; sortOrder: number };
 
@@ -50,7 +52,6 @@ export function ProductForm({ product }: ProductFormProps) {
 
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [uploadingIndex, setUploadingIndex] = useState<number | null>(null);
 
   function updateField<K extends keyof typeof form>(key: K, value: (typeof form)[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -63,11 +64,17 @@ export function ProductForm({ product }: ProductFormProps) {
     }));
   }
 
-  function addImage() {
-    setForm((prev) => ({
-      ...prev,
-      images: [...prev.images, { ...emptyImage(), sortOrder: prev.images.length }],
-    }));
+  function addImages(items: MediaItem[]) {
+    setForm((prev) => {
+      // Replace an empty placeholder row, then append the picked images.
+      const kept = prev.images.filter((img) => img.url);
+      const added = items.map((item, i) => ({
+        url: item.url,
+        alt: item.alt || `${prev.name || "Product"} image ${kept.length + i + 1}`,
+        sortOrder: kept.length + i,
+      }));
+      return { ...prev, images: [...kept, ...added] };
+    });
   }
 
   function removeImage(index: number) {
@@ -75,27 +82,6 @@ export function ProductForm({ product }: ProductFormProps) {
       ...prev,
       images: prev.images.filter((_, i) => i !== index),
     }));
-  }
-
-  async function uploadImage(index: number, file: File) {
-    setUploadingIndex(index);
-    const body = new FormData();
-    body.append("file", file);
-
-    const res = await fetch("/api/admin/upload", { method: "POST", body });
-    const data = await res.json();
-
-    if (!res.ok) {
-      setError(data.error ?? "Upload failed");
-      setUploadingIndex(null);
-      return;
-    }
-
-    updateImage(index, { url: data.url });
-    if (!form.images[index]?.alt) {
-      updateImage(index, { alt: `${form.name || "Product"} image ${index + 1}` });
-    }
-    setUploadingIndex(null);
   }
 
   function parseSpecs(text: string): Record<string, string> {
@@ -221,9 +207,16 @@ export function ProductForm({ product }: ProductFormProps) {
       <section className="rounded-lg border border-charcoal/10 bg-white p-6">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="font-serif text-xl text-navy">Photos</h2>
-          <button type="button" onClick={addImage} className="text-sm text-navy underline">
-            Add photo
-          </button>
+          <MediaPicker
+            multiple
+            defaultFolder="products"
+            onPick={addImages}
+            trigger={
+              <button type="button" className="text-sm text-navy underline">
+                Add photos
+              </button>
+            }
+          />
         </div>
         <div className="space-y-6">
           {form.images.map((image, index) => (
@@ -236,19 +229,15 @@ export function ProductForm({ product }: ProductFormProps) {
                 )}
               </div>
               <div className="space-y-3">
-                <div>
-                  <label className="mb-1 block text-sm font-medium">Upload</label>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) uploadImage(index, file);
-                    }}
-                    disabled={uploadingIndex === index}
-                  />
-                  {uploadingIndex === index && <p className="text-xs text-charcoal/60">Uploading...</p>}
-                </div>
+                <MediaPicker
+                  defaultFolder="products"
+                  onPick={([item]) => updateImage(index, { url: item.url, alt: image.alt || item.alt })}
+                  trigger={
+                    <button type="button" className="rounded-md border border-charcoal/20 px-3 py-1.5 text-sm hover:bg-cream">
+                      {image.url ? "Replace from library" : "Choose from library"}
+                    </button>
+                  }
+                />
                 <div>
                   <label className="mb-1 block text-sm font-medium">Image URL</label>
                   <input className={inputClass} value={image.url} onChange={(e) => updateImage(index, { url: e.target.value })} placeholder="/uploads/photo.webp or https://..." />
