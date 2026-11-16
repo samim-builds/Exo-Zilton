@@ -39,10 +39,10 @@ export function AnnouncementBar({ announcement }: { announcement: SiteSettings["
   }
 
   return (
-    <div className="relative bg-ink px-12 py-2.5 text-center text-sm text-porcelain">
+    <div className="relative bg-night px-12 py-2.5 text-center text-sm text-on-night">
       {announcement.text}
       {announcement.href && (
-        <Link href={announcement.href} className="ml-2 underline decoration-porcelain/40 underline-offset-4 hover:decoration-porcelain">
+        <Link href={announcement.href} className="ml-2 underline decoration-on-night/40 underline-offset-4 hover:decoration-on-night">
           {announcement.linkLabel || "Learn more"}
         </Link>
       )}
@@ -50,7 +50,7 @@ export function AnnouncementBar({ announcement }: { announcement: SiteSettings["
         type="button"
         onClick={dismiss}
         aria-label="Dismiss announcement"
-        className="absolute top-1/2 right-2 flex size-9 -translate-y-1/2 items-center justify-center rounded-full text-porcelain/70 hover:text-porcelain"
+        className="absolute top-1/2 right-2 flex size-9 -translate-y-1/2 items-center justify-center rounded-full text-on-night/70 hover:text-on-night"
       >
         <X className="size-4" />
       </button>

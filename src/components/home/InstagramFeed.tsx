@@ -34,7 +34,7 @@ function InstagramGrid({ handle, posts }: { handle: string; posts: SectionData<"
           href={post.href || instagramUrl(handle)}
           target="_blank"
           rel="noopener noreferrer"
-          className="group relative aspect-square overflow-hidden rounded-[2px] bg-glaze"
+          className="group relative aspect-square overflow-hidden rounded-[2px] bg-glaze photo-frame"
         >
           <Image
             src={post.image}

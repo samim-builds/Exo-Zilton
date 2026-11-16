@@ -34,7 +34,7 @@ export function CartView() {
       <ul className="divide-y divide-glaze border-y border-glaze lg:col-span-7">
         {items.map((item) => (
           <li key={item.key} className="flex gap-4 py-6 sm:gap-6">
-            <Link href={item.href} className="relative size-24 shrink-0 overflow-hidden rounded-[2px] bg-white sm:size-28" tabIndex={-1} aria-hidden>
+            <Link href={item.href} className="relative size-24 shrink-0 overflow-hidden rounded-[2px] bg-frame photo-frame sm:size-28" tabIndex={-1} aria-hidden>
               {item.image && <Image src={item.image} alt="" fill sizes="112px" className="object-contain p-2" />}
             </Link>
             <div className="flex min-w-0 flex-1 flex-col gap-4 sm:flex-row sm:justify-between">

@@ -3,6 +3,7 @@ import { Fraunces, Instrument_Sans } from "next/font/google";
 import { Analytics } from "@vercel/analytics/react";
 import { siteConfig } from "@/lib/site";
 import { buildMetadata } from "@/lib/seo";
+import { themeInitScript } from "@/lib/theme";
 import "./globals.css";
 
 // Fraunces for display type (soft optical-size serif), Instrument Sans for UI and body.
@@ -38,7 +39,13 @@ export default function RootLayout({
     <html
       lang="en"
       className={`${fraunces.variable} ${instrumentSans.variable} h-full antialiased`}
+      // themeInitScript sets data-theme before hydration.
+      suppressHydrationWarning
     >
+      <head>
+        {/* Sets the shop's light/dark theme before first paint (no white flash). */}
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+      </head>
       {/* Browser extensions (e.g. Grammarly) inject attributes on <body> before hydration.
           This only silences attribute mismatches on <body> itself, not its children. */}
       <body className="flex min-h-full flex-col bg-porcelain text-ink" suppressHydrationWarning>

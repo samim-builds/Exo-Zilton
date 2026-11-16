@@ -27,7 +27,7 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
 
   return (
     <div className="flex flex-col gap-3 lg:flex-row-reverse lg:gap-4">
-      <div className="relative aspect-square flex-1 overflow-hidden rounded-[2px] bg-white">
+      <div className="relative aspect-square flex-1 overflow-hidden rounded-[2px] bg-frame photo-frame">
         {activeImage && (
           <Image
             src={activeImage}
@@ -57,7 +57,7 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
                 tabIndex={isActive ? 0 : -1}
                 onClick={() => setActiveIndex(index)}
                 className={cn(
-                  "relative size-16 shrink-0 overflow-hidden rounded-[2px] bg-white transition-shadow lg:size-20",
+                  "relative size-16 shrink-0 overflow-hidden rounded-[2px] bg-frame photo-frame transition-shadow lg:size-20",
                   isActive ? "ring-1 ring-ink ring-offset-2 ring-offset-porcelain" : "opacity-70 hover:opacity-100",
                 )}
               >

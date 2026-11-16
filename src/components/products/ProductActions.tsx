@@ -119,7 +119,7 @@ export function ProductActions({ product, variant, href }: ProductActionsProps) 
           {showForm ? "Close the question form" : "Ask a question about this size"}
         </Button>
         {showForm && (
-          <div className="mt-4 rounded-[6px] border border-glaze bg-white p-5 sm:p-6">
+          <div className="mt-4 rounded-[6px] border border-glaze bg-surface p-5 sm:p-6">
             <InquiryForm defaultProduct={variant.title ? `${product.name} - ${variant.title}` : product.name} defaultSize={variant.title} />
           </div>
         )}

@@ -104,7 +104,7 @@ export function WelcomeOffer({ offer }: { offer: SiteSettings["welcomeOffer"] })
   if (!open || hiddenHere) return null;
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-end justify-center bg-ink/40 p-4 sm:items-center" onClick={close}>
+    <div className="fixed inset-0 z-[60] flex items-end justify-center bg-night/60 p-4 sm:items-center" onClick={close}>
       <div
         ref={dialogRef}
         role="dialog"
@@ -130,7 +130,7 @@ export function WelcomeOffer({ offer }: { offer: SiteSettings["welcomeOffer"] })
             <button
               type="button"
               onClick={() => copy(result.code)}
-              className="tabular mx-auto mt-6 block rounded-[6px] border border-dashed border-bronze/60 bg-white px-6 py-3 text-xl font-medium tracking-wide text-ink"
+              className="tabular mx-auto mt-6 block rounded-[6px] border border-dashed border-bronze/60 bg-surface px-6 py-3 text-xl font-medium tracking-wide text-ink"
             >
               {result.code}
             </button>

@@ -9,6 +9,7 @@ import type { SiteSettings } from "@/lib/cms/settings";
 import { buildGeneralWhatsAppUrl } from "@/lib/whatsapp";
 import { useCart } from "@/components/cart/CartProvider";
 import { cn } from "@/lib/utils";
+import { ThemeToggle } from "./ThemeToggle";
 
 function isCurrent(pathname: string, href: string): boolean {
   if (href === "/") return pathname === "/";
@@ -56,6 +57,7 @@ export function Header({ contact, links }: { contact: SiteSettings["contact"]; l
         </nav>
 
         <div className="flex items-center gap-1">
+          <ThemeToggle />
           <Link
             href="/cart"
             aria-label={`Cart, ${count} item${count === 1 ? "" : "s"}`}
