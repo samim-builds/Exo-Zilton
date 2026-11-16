@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { ArrowRight, ClipboardList, Package, TriangleAlert, Wallet } from "lucide-react";
 import { prisma } from "@/lib/db";
-import { getAllProductsAdmin } from "@/lib/products";
 import { formatMoney } from "@/lib/order-schema";
 import { Button } from "@/components/ui/button";
 import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -40,6 +39,16 @@ async function getOrderStats() {
   return { pending, recentCount, pkr: revenueBy("PKR"), usd: revenueBy("USD"), recentOrders, activity };
 }
 
+async function getCatalogStats() {
+  const [active, outOfStock] = await Promise.all([
+    prisma.product.count({ where: { status: "ACTIVE" } }),
+    prisma.productVariant.count({
+      where: { active: true, trackInventory: true, stockQty: { lte: 0 }, product: { status: "ACTIVE" } },
+    }),
+  ]);
+  return { active, outOfStock };
+}
+
 function relativeTime(date: Date): string {
   const minutes = Math.round((Date.now() - date.getTime()) / 60000);
   if (minutes < 1) return "just now";
@@ -51,8 +60,8 @@ function relativeTime(date: Date): string {
 
 export default async function AdminDashboardPage() {
   const dbConfigured = Boolean(process.env.DATABASE_URL);
-  const [products, stats] = await Promise.all([
-    getAllProductsAdmin(),
+  const [catalog, stats] = await Promise.all([
+    dbConfigured ? getCatalogStats().catch(() => null) : null,
     dbConfigured ? getOrderStats().catch(() => null) : null,
   ]);
 
@@ -80,10 +89,10 @@ export default async function AdminDashboardPage() {
     },
     {
       label: "Products",
-      value: products.filter((p) => p.published).length,
-      hint: `${products.filter((p) => !p.inStock).length} out of stock`,
+      value: catalog?.active ?? "—",
+      hint: catalog ? `${catalog.outOfStock} variant(s) out of stock` : "Active products",
       icon: Package,
-      href: "/admin/products",
+      href: "/admin/catalog/products",
     },
   ];
 
@@ -94,7 +103,7 @@ export default async function AdminDashboardPage() {
         description="Orders, revenue and catalog at a glance."
         actions={
           <Button asChild>
-            <Link href="/admin/products/new">Add product</Link>
+            <Link href="/admin/catalog/products/new">Add product</Link>
           </Button>
         }
       />

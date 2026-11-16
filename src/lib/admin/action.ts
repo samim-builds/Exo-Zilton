@@ -12,6 +12,8 @@ export class AdminActionError extends Error {}
 type Revalidate<I, T> = {
   tags?: string[] | ((input: I, result: T) => string[]);
   paths?: string[] | ((input: I, result: T) => string[]);
+  /** Revalidate every storefront page (catalog, settings and content changes). */
+  site?: boolean;
 };
 
 /**
@@ -56,6 +58,7 @@ export function adminAction<S extends z.ZodType, T>(
       typeof v === "function" ? v(parsed.data, result) : (v ?? []);
     for (const tag of resolve(revalidate.tags)) updateTag(tag);
     for (const path of resolve(revalidate.paths)) revalidatePath(path);
+    if (revalidate.site) revalidatePath("/", "layout");
 
     return { ok: true, data: result };
   };

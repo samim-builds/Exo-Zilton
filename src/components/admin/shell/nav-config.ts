@@ -1,5 +1,6 @@
 import {
   ClipboardList,
+  FolderTree,
   History,
   Images,
   LayoutDashboard,
@@ -20,7 +21,10 @@ export const adminNav: AdminNavGroup[] = [
   },
   {
     label: "Catalog",
-    items: [{ href: "/admin/products", label: "Products", icon: Package }],
+    items: [
+      { href: "/admin/catalog/products", label: "Products", icon: Package },
+      { href: "/admin/catalog/categories", label: "Categories", icon: FolderTree },
+    ],
   },
   {
     label: "Content",
@@ -36,6 +40,8 @@ export const adminNav: AdminNavGroup[] = [
 export const segmentLabels: Record<string, string> = {
   admin: "Dashboard",
   orders: "Orders",
+  catalog: "Catalog",
+  categories: "Categories",
   products: "Products",
   media: "Media library",
   activity: "Activity log",
