@@ -158,18 +158,22 @@ export function VariantsTab({
       </Card>
 
       {form.variants.length > 1 ? (
-        <div className="grid gap-6 lg:grid-cols-[260px_minmax(0,1fr)] lg:items-start">
-          <Card className="gap-0 py-2 lg:sticky lg:top-20">
+        <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[260px_minmax(0,1fr)] lg:items-start">
+          <Card className="min-w-0 gap-0 py-2 lg:sticky lg:top-20">
             <CardHeader className="px-4 pt-2 pb-2">
               <CardTitle className="text-sm">Variants ({form.variants.length})</CardTitle>
               <CardDescription className="sr-only">Choose a variant to edit</CardDescription>
             </CardHeader>
-            <ul className="flex gap-1 overflow-x-auto px-2 pb-1 lg:max-h-[70vh] lg:flex-col lg:overflow-y-auto" role="listbox" aria-label="Variants">
+            <ul
+              className="flex snap-x gap-1 overflow-x-auto px-2 pb-1 [scrollbar-width:none] lg:max-h-[70vh] lg:snap-none lg:flex-col lg:overflow-x-visible lg:overflow-y-auto"
+              role="listbox"
+              aria-label="Variants"
+            >
               {form.variants.map((v) => {
                 const thumb = thumbFor(v);
                 const isSelected = v.key === selected?.key;
                 return (
-                  <li key={v.key} className="shrink-0">
+                  <li key={v.key} className="w-44 shrink-0 snap-start lg:w-auto">
                     <button
                       type="button"
                       role="option"
@@ -187,9 +191,8 @@ export function VariantsTab({
                         <span className={cn("block truncate text-sm font-medium", !v.active && "text-muted-foreground line-through")}>
                           {variantTitle(v.combo)}
                         </span>
-                        <span className="block truncate text-xs text-muted-foreground tabular-nums">
-                          {formatPKR(v.pricePKR)} · {stockLabel(v)}
-                        </span>
+                        <span className="block truncate text-xs text-muted-foreground tabular-nums">{formatPKR(v.pricePKR)}</span>
+                        <span className="block truncate text-xs text-muted-foreground">{stockLabel(v)}</span>
                       </span>
                     </button>
                   </li>

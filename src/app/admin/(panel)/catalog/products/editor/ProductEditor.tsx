@@ -139,7 +139,7 @@ export function ProductEditor({
       )}
 
       <Tabs value={tab} onValueChange={setTab}>
-        <TabsList className="mb-4 flex-wrap">
+        <TabsList className="mb-4 max-w-full justify-start overflow-x-auto overflow-y-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <TabsTrigger value="general">General</TabsTrigger>
           {isBundle ? (
             <TabsTrigger value="contents">Contents and price ({form.bundle?.items.length ?? 0})</TabsTrigger>

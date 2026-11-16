@@ -95,7 +95,7 @@ export function VariantPanel({
             </Button>
           )}
         </CardHeader>
-        <CardContent className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <CardContent className="grid grid-cols-2 gap-4 lg:grid-cols-3">
           <NumberField label="Price (PKR)" value={variant.pricePKR} onChange={(n) => set({ pricePKR: n ?? 0 })} />
           <NumberField label="Price (USD)" value={variant.priceUSD} onChange={(n) => set({ priceUSD: n ?? 0 })} />
           <NumberField label="Cost (PKR)" value={variant.costPKR} nullable placeholder="Optional" onChange={(n) => set({ costPKR: n })} />
@@ -109,8 +109,8 @@ export function VariantPanel({
           <CardTitle>Stock and shipping</CardTitle>
           <CardDescription>Untracked variants are always in stock; tracked ones sell out at 0.</CardDescription>
         </CardHeader>
-        <CardContent className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <Field label="SKU">
+        <CardContent className="grid grid-cols-2 gap-4 lg:grid-cols-3">
+          <Field label="SKU" className="col-span-2 lg:col-span-1">
             <Input value={variant.sku} onChange={(e) => set({ sku: e.target.value })} className="font-mono text-sm" />
           </Field>
           <NumberField label="Weight (grams)" value={variant.weightGrams} nullable placeholder="Optional" onChange={(n) => set({ weightGrams: n })} />
@@ -150,7 +150,7 @@ export function VariantPanel({
             <CardTitle>Details</CardTitle>
             <CardDescription>Shown in this variant&apos;s specifications on the product page.</CardDescription>
           </CardHeader>
-          <CardContent className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <CardContent className="grid grid-cols-2 gap-4 lg:grid-cols-3">
             {defs.map((def) => (
               <Field key={def.key} label={attributeLabel(def)}>
                 <AttributeInput
