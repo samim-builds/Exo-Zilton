@@ -1,21 +1,16 @@
 import Link from "next/link";
-import { Reveal } from "@/components/shared/Reveal";
+import { buttonVariants } from "@/components/site/Button";
 import type { SectionData } from "@/lib/cms/sections";
 
 export function BrandBanner({ data }: { data: SectionData<"brand-banner"> }) {
   return (
-    <section className="bg-navy py-16 text-white sm:py-20">
-      <div className="mx-auto max-w-4xl px-4 text-center sm:px-6 lg:px-8">
-        <Reveal>
-          <p className="text-xs uppercase tracking-[0.3em] text-gold">{data.eyebrow}</p>
-          <h2 className="mt-4 font-serif text-3xl font-semibold sm:text-4xl">{data.title}</h2>
-        </Reveal>
-        <p className="mt-6 text-base leading-relaxed text-white/85">{data.body}</p>
+    <section className="bg-ink py-20 text-porcelain sm:py-28">
+      <div className="mx-auto max-w-3xl px-4 text-center sm:px-6 lg:px-8">
+        {data.eyebrow && <p className="text-sm font-medium text-beech">{data.eyebrow}</p>}
+        <h2 className="mt-4 text-3xl text-porcelain sm:text-4xl">{data.title}</h2>
+        <p className="mx-auto mt-6 max-w-prose text-base text-porcelain/75 sm:text-lg">{data.body}</p>
         {data.ctaLabel && (
-          <Link
-            href={data.ctaHref || "/about"}
-            className="mt-8 inline-flex rounded-full border border-gold px-8 py-3 text-sm uppercase tracking-widest text-gold transition-colors hover:bg-gold hover:text-navy"
-          >
+          <Link href={data.ctaHref || "/about"} className={buttonVariants({ variant: "inverse", className: "mt-9" })}>
             {data.ctaLabel}
           </Link>
         )}

@@ -102,12 +102,12 @@ export const SECTION_TYPES = {
     label: "Hero carousel",
     schema: heroSchema,
     defaults: {
-      eyebrow: "01 — Unglazed vitrified porcelain",
-      title: "Pure Flavour.",
-      titleAccent: "Zero Staining. Zero Odours.",
+      eyebrow: "",
+      title: "Pure flavour, every day.",
+      titleAccent: "No stains, no lingering smells.",
       body: "Engineered from vitrified unglazed porcelain, designed to grind without retaining previous flavours. An indestructible culinary tool for life.",
-      primaryCta: { label: "Explore collection", href: "/products" },
-      secondaryCta: { label: "Why Porcelain? →", href: "/#why-porcelain" },
+      primaryCta: { label: "Shop all sizes", href: "/products" },
+      secondaryCta: { label: "Why unglazed porcelain", href: "/#why-porcelain" },
       slides: [
         { image: "/hero/grind.webp", alt: "Unglazed porcelain mortar and pestle with whole spices on stone" },
         { image: "/hero/crush.webp", alt: "Pestle grinding spices in an unglazed porcelain mortar" },
@@ -115,9 +115,9 @@ export const SECTION_TYPES = {
       ],
     } satisfies z.infer<typeof heroSchema>,
     fields: [
-      { key: "eyebrow", label: "Eyebrow", kind: "text" },
+      { key: "eyebrow", label: "Line above the title (optional)", kind: "text" },
       { key: "title", label: "Headline", kind: "text" },
-      { key: "titleAccent", label: "Headline second line (italic)", kind: "text" },
+      { key: "titleAccent", label: "Headline second line", kind: "text" },
       { key: "body", label: "Intro", kind: "textarea" },
       { key: "primaryCta", label: "Primary button", kind: "link" },
       { key: "secondaryCta", label: "Secondary link", kind: "link" },
@@ -138,9 +138,9 @@ export const SECTION_TYPES = {
     schema: trustBarSchema,
     defaults: {
       items: [
-        { label: "Made in Pakistan", description: "Proudly crafted with care" },
-        { label: "Quality Guarantee", description: "Built to last for years" },
-        { label: "Worldwide Inquiries", description: "Ship across Pakistan & abroad" },
+        { label: "Made in Pakistan", description: "Crafted with care" },
+        { label: "Built to last", description: "A grinder you keep for years" },
+        { label: "Ships worldwide", description: "Across Pakistan and abroad" },
       ],
     } satisfies z.infer<typeof trustBarSchema>,
     fields: [
@@ -160,17 +160,17 @@ export const SECTION_TYPES = {
     label: "Product rail",
     schema: productRailSchema,
     defaults: {
-      eyebrow: "Shop",
-      title: "Mortar & Pestle Collection",
+      eyebrow: "",
+      title: "Mortar and pestle sets",
       description: "Available in multiple sizes to suit every kitchen — from compact daily use to professional grinding.",
-      ctaLabel: "View All",
+      ctaLabel: "Shop all sizes",
       ctaHref: "/products",
       source: "all",
       categorySlug: "",
       limit: 4,
     } satisfies z.infer<typeof productRailSchema>,
     fields: [
-      { key: "eyebrow", label: "Eyebrow", kind: "text" },
+      { key: "eyebrow", label: "Line above the title (optional)", kind: "text" },
       { key: "title", label: "Title", kind: "text" },
       { key: "description", label: "Description", kind: "textarea" },
       {
@@ -192,30 +192,30 @@ export const SECTION_TYPES = {
     label: "Feature grid",
     schema: featureGridSchema,
     defaults: {
-      eyebrow: "Why Exo Zilton",
-      title: "Craftsmanship You Can Trust",
+      eyebrow: "",
+      title: "Made to outlast every recipe",
       description: "Every mortar and pestle is designed to maximise flavour, durability, and timeless kitchen elegance.",
       items: [
         {
-          title: "Vitrified Porcelain",
+          title: "Vitrified porcelain",
           description: "Dense unglazed porcelain provides the perfect abrasive finish for blending herbs and spices without staining.",
         },
         {
-          title: "Beechwood Handle",
+          title: "Beechwood handle",
           description: "Ergonomic beechwood handle offers comfortable grip and control when grinding even the toughest mixtures.",
         },
         {
-          title: "Gift-Ready Packaging",
+          title: "Gift-ready packaging",
           description: "Each set arrives in beautiful kraft packaging — perfect for weddings, housewarmings, and special occasions.",
         },
         {
-          title: "Worldwide Shipping",
+          title: "Worldwide shipping",
           description: "Based in Pakistan with delivery across the country and international inquiries welcome via WhatsApp.",
         },
       ],
     } satisfies z.infer<typeof featureGridSchema>,
     fields: [
-      { key: "eyebrow", label: "Eyebrow", kind: "text" },
+      { key: "eyebrow", label: "Line above the title (optional)", kind: "text" },
       { key: "title", label: "Title", kind: "text" },
       { key: "description", label: "Description", kind: "textarea" },
       {
@@ -234,48 +234,44 @@ export const SECTION_TYPES = {
     label: "Scroll story",
     schema: scrollStorySchema,
     defaults: {
-      eyebrow: "Engineering & Craft",
-      title: "The Anatomy of Pure Grinding",
+      eyebrow: "",
+      title: "What makes it grind better",
       image: "/hero/grind.webp",
-      imageAlt: "Exo Zilton Vitrified Porcelain Anatomy",
+      imageAlt: "Exo Zilton porcelain mortar and pestle with spices",
       badgeLeft: "Vitrified Bisque Porcelain",
       badgeRight: "Fired at 1,300°C",
       pillars: [
         {
-          step: "01",
-          tag: "MOLECULAR DENSITY",
-          title: "Fired at 1,300°C for Absolute Vitrification",
-          body: "At peak kiln temperatures, porcelain clay fusions into a dense, non-porous glass structure. Unlike granite or marble, it will never absorb garlic essential oils, vinegar, or turmeric stains.",
+          step: "",
+          tag: "",
+          title: "Fired at 1,300°C until it turns to glass",
+          body: "At peak kiln temperatures, porcelain clay fuses into a dense, non-porous glass structure. Unlike granite or marble, it will never absorb garlic essential oils, vinegar, or turmeric stains.",
         },
         {
-          step: "02",
-          tag: "TEXTURE & TOOTH",
-          title: "Matte Bisque Interior for Pure Shearing Power",
+          step: "",
+          tag: "",
+          title: "A matte interior that grips the spice",
           body: "Glazed bowls cause whole spices to skate and bounce. Our unglazed interior provides the precise micro-abrasive tooth needed to crush hard peppercorns into fine powders and emulsify smooth pesto pastes.",
         },
         {
-          step: "03",
-          tag: "TACTILE BALANCE",
-          title: "Ergonomic Turned Beechwood Grip",
+          step: "",
+          tag: "",
+          title: "A turned beechwood handle",
           body: "A hybrid design that marries the heavy downward inertia of dense porcelain with the warmth and leverage of natural European beechwood. Reduces wrist fatigue during extended culinary prep.",
         },
       ],
     } satisfies z.infer<typeof scrollStorySchema>,
     fields: [
-      { key: "eyebrow", label: "Eyebrow", kind: "text" },
+      { key: "eyebrow", label: "Line above the title (optional)", kind: "text" },
       { key: "title", label: "Title", kind: "text" },
       { key: "image", label: "Image", kind: "image" },
       { key: "imageAlt", label: "Image alt text", kind: "text" },
-      { key: "badgeLeft", label: "Image caption (left)", kind: "text" },
-      { key: "badgeRight", label: "Image caption (right)", kind: "text" },
       {
         key: "pillars",
-        label: "Story steps",
+        label: "Story points",
         kind: "list",
-        itemLabel: "Step",
+        itemLabel: "Point",
         fields: [
-          { key: "step", label: "Number", kind: "text" },
-          { key: "tag", label: "Tag", kind: "text" },
           { key: "title", label: "Title", kind: "text" },
           { key: "body", label: "Text", kind: "textarea" },
         ],
@@ -287,7 +283,7 @@ export const SECTION_TYPES = {
     schema: comparisonSchema,
     defaults: {
       anchor: "why-porcelain",
-      eyebrow: "Material notes",
+      eyebrow: "",
       title: "Porcelain, stone, and the European import",
       intro: "A short comparison of the bowl in the hand: what it keeps, what it grinds, and how it arrives.",
       columns: ["Porcelain", "Stone", "European heritage imports"],
@@ -336,7 +332,7 @@ export const SECTION_TYPES = {
     } satisfies z.infer<typeof comparisonSchema>,
     fields: [
       { key: "anchor", label: "Anchor id (for links like /#why-porcelain)", kind: "text" },
-      { key: "eyebrow", label: "Eyebrow", kind: "text" },
+      { key: "eyebrow", label: "Line above the title (optional)", kind: "text" },
       { key: "title", label: "Title", kind: "text" },
       { key: "intro", label: "Intro", kind: "textarea" },
       { key: "columns", label: "Columns", kind: "strings" },
@@ -356,14 +352,14 @@ export const SECTION_TYPES = {
     label: "Brand banner",
     schema: brandBannerSchema,
     defaults: {
-      eyebrow: "Part of the Exo Zilton collection",
-      title: "Synonymous with the Iconic Mortar & Pestle",
+      eyebrow: "",
+      title: "Traditional form, made for modern kitchens",
       body: "Exo Zilton expertly combines traditional designs and contemporary flair to create timeless pieces that take pride of place in kitchens across Pakistan and beyond. Our mortar and pestle sets offer durability, practicality, and an ageless charm to enhance any kitchen — from home cooks to professional chefs.",
       ctaLabel: "About Exo Zilton",
       ctaHref: "/about",
     } satisfies z.infer<typeof brandBannerSchema>,
     fields: [
-      { key: "eyebrow", label: "Eyebrow", kind: "text" },
+      { key: "eyebrow", label: "Line above the title (optional)", kind: "text" },
       { key: "title", label: "Title", kind: "text" },
       { key: "body", label: "Text", kind: "textarea" },
       { key: "ctaLabel", label: "Button label", kind: "text" },
@@ -374,12 +370,12 @@ export const SECTION_TYPES = {
     label: "Instagram feed",
     schema: instagramSchema,
     defaults: {
-      eyebrow: "Stay Connected",
-      title: "Follow our Instagram journey...",
+      eyebrow: "",
+      title: "In kitchens on Instagram",
       posts: defaultInstagramPosts,
     } satisfies z.infer<typeof instagramSchema>,
     fields: [
-      { key: "eyebrow", label: "Eyebrow", kind: "text" },
+      { key: "eyebrow", label: "Line above the title (optional)", kind: "text" },
       { key: "title", label: "Title", kind: "text", help: "The handle comes from Settings → Contact." },
       {
         key: "posts",
@@ -400,7 +396,7 @@ export const SECTION_TYPES = {
     schema: pageHeadingSchema,
     defaults: { eyebrow: "", title: "Page title", description: "" } satisfies z.infer<typeof pageHeadingSchema>,
     fields: [
-      { key: "eyebrow", label: "Eyebrow", kind: "text" },
+      { key: "eyebrow", label: "Line above the title (optional)", kind: "text" },
       { key: "title", label: "Title", kind: "text" },
       { key: "description", label: "Description", kind: "textarea" },
     ] as FieldDescriptor[],
@@ -465,7 +461,7 @@ export const SECTION_TYPES = {
     schema: faqSchema,
     defaults: { eyebrow: "", title: "Frequently asked questions", items: [{ question: "", answer: "" }] } satisfies z.infer<typeof faqSchema>,
     fields: [
-      { key: "eyebrow", label: "Eyebrow", kind: "text" },
+      { key: "eyebrow", label: "Line above the title (optional)", kind: "text" },
       { key: "title", label: "Title", kind: "text" },
       {
         key: "items",
@@ -552,8 +548,8 @@ export const DEFAULT_PAGES: Record<"home" | "about" | "terms" | "privacy", Defau
       "Learn about Exo Zilton — a premium mortar and pestle brand crafting unglazed vitrified porcelain kitchen tools with timeless heritage design.",
     sections: [
       section("about-heading", "page-heading", {
-        eyebrow: "Our Story",
-        title: "Lovingly Crafted Mortar and Pestles",
+        eyebrow: "",
+        title: "Mortar and pestle sets, made with care",
         description:
           "Exo Zilton brings together traditional craftsmanship and modern quality standards to create mortar and pestle sets worthy of any kitchen.",
       }),

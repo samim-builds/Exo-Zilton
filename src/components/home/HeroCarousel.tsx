@@ -6,10 +6,8 @@ import useEmblaCarousel from "embla-carousel-react";
 import Autoplay from "embla-carousel-autoplay";
 import { useEffect, useMemo, useState } from "react";
 import type { SectionData } from "@/lib/cms/sections";
-
-function pad(index: number) {
-  return String(index + 1).padStart(2, "0");
-}
+import { buttonVariants } from "@/components/site/Button";
+import { cn } from "@/lib/utils";
 
 export function HeroCarousel({ data }: { data: SectionData<"hero-carousel"> }) {
   const { slides } = data;
@@ -37,96 +35,68 @@ export function HeroCarousel({ data }: { data: SectionData<"hero-carousel"> }) {
     };
   }, [emblaApi]);
 
-  const progress = ((selectedIndex + 1) / slides.length) * 100;
-
   return (
-    <section className="bg-porcelain" aria-label="Featured highlights">
-      <div className="mx-auto grid max-w-7xl grid-cols-1 items-stretch gap-10 px-5 py-14 sm:px-8 sm:py-16 lg:grid-cols-[minmax(0,1.2fr)_auto] lg:gap-x-16 lg:px-10 lg:py-20">
-        <div className="@container flex flex-col lg:h-full">
-          <p className="font-sans text-[11px] uppercase tracking-[0.22em] text-[#8F6E3E]">
-            {data.eyebrow}
-          </p>
-          <h1 className="mt-5 font-serif text-[2.75rem] font-medium leading-[0.95] tracking-tight text-navy sm:text-6xl lg:text-[4.25rem]">
+    <section className="overflow-hidden bg-porcelain" aria-label="Featured highlights">
+      <div className="mx-auto grid max-w-6xl grid-cols-1 gap-10 px-4 pt-10 pb-16 sm:px-6 lg:grid-cols-12 lg:items-center lg:gap-12 lg:px-8 lg:py-16">
+        <div className="hero-in lg:col-span-6 xl:col-span-5">
+          {data.eyebrow && <p className="text-sm font-medium text-bronze">{data.eyebrow}</p>}
+          <h1 className="mt-4 text-[clamp(2.5rem,5.2vw,4.25rem)] leading-[1.02] text-ink [font-variation-settings:'SOFT'_100,'opsz'_144] [letter-spacing:-0.025em]">
             {data.title}
+            {data.titleAccent && (
+              <>
+                {" "}
+                <span className="block">{data.titleAccent}</span>
+              </>
+            )}
           </h1>
-          <p className="mt-2 whitespace-nowrap font-serif font-medium italic leading-none tracking-tight text-navy [font-size:clamp(1.35rem,7.6cqi,3rem)]">
-            {data.titleAccent}
-          </p>
-          <p className="mt-6 max-w-md font-sans text-[15px] leading-[1.7] text-[#4A4742] sm:text-[16px]">
-            {data.body}
-          </p>
-          <div className="mt-8 flex flex-wrap items-center gap-x-8 gap-y-4">
-            <Link
-              href={data.primaryCta.href}
-              className="inline-flex bg-[#0D1929] px-7 py-3.5 font-sans text-[12px] uppercase tracking-[0.16em] text-white transition-colors hover:bg-bronze"
-            >
+          <p className="mt-6 max-w-md text-base text-stone sm:text-lg">{data.body}</p>
+          <div className="mt-9 flex flex-wrap items-center gap-x-7 gap-y-4">
+            <Link href={data.primaryCta.href} className={buttonVariants({ size: "lg" })}>
               {data.primaryCta.label}
             </Link>
-            <Link
-              href={data.secondaryCta.href}
-              className="font-sans text-[15px] text-navy transition-colors hover:text-bronze"
-            >
-              {data.secondaryCta.label}
-            </Link>
+            {data.secondaryCta.label && (
+              <Link href={data.secondaryCta.href} className={buttonVariants({ variant: "quiet" })}>
+                {data.secondaryCta.label}
+              </Link>
+            )}
           </div>
+        </div>
 
-          <div className="mt-12 max-w-md lg:mt-auto lg:pt-16">
-            <p className="flex items-baseline gap-3 font-sans text-[12px] tracking-[0.22em] text-navy">
-              <span>{pad(selectedIndex)}</span>
-              <span className="font-serif text-[1.15em] font-light tracking-normal text-[#8F6E3E]" aria-hidden="true">
-                —
-              </span>
-              <span className="text-[#4A4742]">{pad(slides.length - 1)}</span>
-            </p>
-            <div
-              className="relative mt-4 h-px bg-[#EBE7DE]"
-              role="tablist"
-              aria-label="Slides"
-            >
-              <div
-                className="absolute -top-px left-0 h-[2px] bg-[#0D1929] transition-[width] duration-500 motion-reduce:transition-none"
-                style={{ width: `${progress}%` }}
-              />
+        <div className="hero-in-late relative -mx-4 sm:mx-0 lg:col-span-6 xl:col-span-7 lg:-mr-[max(2rem,calc((100vw-72rem)/2+2rem))]">
+          <div className="relative aspect-[4/3] bg-glaze sm:rounded-[2px] lg:aspect-auto lg:h-[min(34rem,calc(100svh-11rem))] lg:rounded-r-none">
+            <div ref={emblaRef} className="absolute inset-0 overflow-hidden sm:rounded-[2px] lg:rounded-r-none">
+              <div className="flex h-full">
+                {slides.map((slide, index) => (
+                  <div key={index} className="relative h-full min-w-0 flex-[0_0_100%]" aria-roledescription="slide" aria-label={`${index + 1} of ${slides.length}`}>
+                    <Image
+                      src={slide.image}
+                      alt={slide.alt}
+                      fill
+                      priority={index === 0}
+                      className="object-cover object-center"
+                      sizes="(max-width: 1024px) 100vw, 60vw"
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+          {slides.length > 1 && (
+            <div className="mt-4 flex gap-1 px-4 sm:px-0" role="group" aria-label="Choose slide">
               {slides.map((slide, index) => (
                 <button
                   key={index}
                   type="button"
-                  role="tab"
-                  aria-selected={selectedIndex === index}
-                  aria-label={`Go to slide ${index + 1}`}
+                  aria-label={`Show slide ${index + 1}: ${slide.alt}`}
+                  aria-current={selectedIndex === index}
                   onClick={() => emblaApi?.scrollTo(index)}
-                  className="absolute top-1/2 h-8 -translate-y-1/2"
-                  style={{
-                    left: `${(index / slides.length) * 100}%`,
-                    width: `${100 / slides.length}%`,
-                  }}
-                />
+                  className="group flex h-8 items-center px-1"
+                >
+                  <span className={cn("block h-[3px] rounded-full transition-all duration-300", selectedIndex === index ? "w-8 bg-ink" : "w-4 bg-ink/20 group-hover:bg-ink/40")} />
+                </button>
               ))}
             </div>
-          </div>
-        </div>
-
-        <div className="flex lg:w-fit lg:items-start">
-          <div className="w-full border border-[#EBE7DE] bg-porcelain p-3 sm:p-4 lg:w-[32rem]">
-            <div className="relative aspect-[5/4]">
-              <div ref={emblaRef} className="absolute inset-0 overflow-hidden">
-                <div className="flex h-full">
-                  {slides.map((slide, index) => (
-                    <div key={index} className="relative h-full min-w-0 flex-[0_0_100%]">
-                      <Image
-                        src={slide.image}
-                        alt={slide.alt}
-                        fill
-                        priority={index === 0}
-                        className="object-cover object-center"
-                        sizes="(max-width: 1024px) 100vw, 512px"
-                      />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
+          )}
         </div>
       </div>
     </section>

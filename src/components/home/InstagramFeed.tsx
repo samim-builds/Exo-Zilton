@@ -1,10 +1,9 @@
 import Image from "next/image";
 import Script from "next/script";
-import { Reveal } from "@/components/shared/Reveal";
+import { buttonVariants } from "@/components/site/Button";
 import { siteConfig } from "@/lib/site";
 import { instagramUrl } from "@/lib/cms/settings";
 import type { SectionData } from "@/lib/cms/sections";
-
 
 function InstagramIcon({ className }: { className?: string }) {
   return (
@@ -27,27 +26,23 @@ function InstagramIcon({ className }: { className?: string }) {
 }
 
 function InstagramGrid({ handle, posts }: { handle: string; posts: SectionData<"instagram-feed">["posts"] }) {
-
   return (
-    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3 lg:grid-cols-6">
+    <div className="grid grid-cols-3 gap-1.5 sm:gap-2 lg:grid-cols-6">
       {posts.filter((post) => post.image).map((post, index) => (
         <a
           key={index}
           href={post.href || instagramUrl(handle)}
           target="_blank"
           rel="noopener noreferrer"
-          className="group relative aspect-square overflow-hidden rounded-md bg-navy/20"
+          className="group relative aspect-square overflow-hidden rounded-[2px] bg-glaze"
         >
           <Image
             src={post.image}
             alt={post.alt}
             fill
-            className="object-cover transition-transform duration-500 group-hover:scale-105"
-            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 16vw"
+            className="object-cover transition-opacity duration-300 group-hover:opacity-85"
+            sizes="(max-width: 1024px) 33vw, 16vw"
           />
-          <div className="absolute inset-0 flex items-center justify-center bg-navy/0 transition-colors duration-300 group-hover:bg-navy/50">
-            <InstagramIcon className="h-8 w-8 scale-75 text-white opacity-0 transition-all duration-300 group-hover:scale-100 group-hover:opacity-100" />
-          </div>
         </a>
       ))}
     </div>
@@ -73,50 +68,21 @@ export function InstagramFeed({ data, handle }: { data: SectionData<"instagram-f
   const useElfsight = Boolean(siteConfig.elfsightWidgetId);
 
   return (
-    <section className="relative overflow-hidden bg-navy py-16 sm:py-20" aria-labelledby="instagram-heading">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="mb-10 flex flex-col items-center text-center">
-          <Image
-            src="/brand/logo.png"
-            alt=""
-            width={120}
-            height={120}
-            className="mb-6 rounded-full"
-            aria-hidden="true"
-          />
-          <Reveal>
-            <p className="text-sm uppercase tracking-[0.3em] text-gold">{data.eyebrow}</p>
-            <h2
-              id="instagram-heading"
-              className="mt-3 font-serif text-2xl font-semibold text-white sm:text-3xl"
-            >
+    <section className="bg-porcelain py-20 sm:py-28" aria-labelledby="instagram-heading">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+        <div className="mb-10 flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            {data.eyebrow && <p className="text-sm font-medium text-bronze">{data.eyebrow}</p>}
+            <h2 id="instagram-heading" className="mt-3 text-3xl text-ink sm:text-4xl">
               {data.title}
             </h2>
-          </Reveal>
-          <a
-            href={profileUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="mt-4 inline-flex items-center gap-2 text-sm text-white/80 transition-colors hover:text-white"
-          >
-            <InstagramIcon className="h-5 w-5" />
-            @{handle.replace(/^@/, "")}
+          </div>
+          <a href={profileUrl} target="_blank" rel="noopener noreferrer" className={buttonVariants({ variant: "secondary", className: "self-start sm:self-auto" })}>
+            <InstagramIcon className="size-4" />@{handle.replace(/^@/, "")}
           </a>
         </div>
 
         {useElfsight ? <ElfsightFeed /> : <InstagramGrid handle={handle} posts={data.posts} />}
-
-        <div className="mt-10 flex justify-center">
-          <a
-            href={profileUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 rounded-full border border-gold px-8 py-3 text-sm uppercase tracking-widest text-gold transition-colors hover:bg-gold hover:text-navy"
-          >
-            <InstagramIcon className="h-4 w-4" />
-            Follow on Instagram
-          </a>
-        </div>
       </div>
     </section>
   );

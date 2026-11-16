@@ -153,6 +153,26 @@
   white-space: nowrap;
 }
 
+/* The one orchestrated moment: the hero headline, then its image. */
+@keyframes hero-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.hero-in {
+  animation: hero-in 0.55s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+.hero-in-late {
+  animation: hero-in 0.6s cubic-bezier(0.2, 0.7, 0.2, 1) 0.12s both;
+}
+
 @keyframes fade-in {
   from {
     opacity: 0;
@@ -169,7 +189,9 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .animate-fade-in {
+  .animate-fade-in,
+  .hero-in,
+  .hero-in-late {
     animation: none;
   }
 }
