@@ -2,7 +2,10 @@
 
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
+import { X } from "lucide-react";
 import type { SiteSettings } from "@/lib/cms/settings";
+import { Button } from "@/components/site/Button";
+import { controlClass } from "@/components/site/Field";
 
 const STORAGE_KEY = "exo_zilton_welcome_v1";
 const HIDDEN_ON = ["/cart", "/checkout", "/orders"];
@@ -101,69 +104,60 @@ export function WelcomeOffer({ offer }: { offer: SiteSettings["welcomeOffer"] })
   if (!open || hiddenHere) return null;
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-end justify-center bg-navy/50 p-4 sm:items-center" onClick={close}>
+    <div className="fixed inset-0 z-[60] flex items-end justify-center bg-ink/40 p-4 sm:items-center" onClick={close}>
       <div
         ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby="welcome-title"
-        className="relative w-full max-w-md rounded-lg bg-porcelain p-6 shadow-2xl sm:p-8"
+        className="relative w-full max-w-md rounded-[10px] bg-porcelain p-6 shadow-[0_24px_60px_-20px_rgb(20_35_58/0.5)] sm:p-9"
         onClick={(e) => e.stopPropagation()}
       >
         <button
           type="button"
           onClick={close}
           aria-label="Close"
-          className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full text-xl text-charcoal/60 hover:bg-cream hover:text-navy"
+          className="absolute top-3 right-3 flex size-10 items-center justify-center rounded-full text-stone hover:bg-glaze hover:text-ink"
         >
-          ×
+          <X className="size-5" />
         </button>
 
         {result?.status === "created" ? (
           <div className="text-center">
-            <h2 id="welcome-title" className="font-serif text-2xl font-semibold text-navy">
+            <h2 id="welcome-title" className="text-3xl text-ink">
               {offer.successTitle}
             </h2>
             <button
               type="button"
               onClick={() => copy(result.code)}
-              className="mx-auto mt-5 block rounded-md border border-dashed border-gold bg-white px-5 py-3 font-mono text-lg tracking-wider text-navy"
+              className="tabular mx-auto mt-6 block rounded-[6px] border border-dashed border-bronze/60 bg-white px-6 py-3 text-xl font-medium tracking-wide text-ink"
             >
               {result.code}
             </button>
-            <p className="mt-2 text-xs text-charcoal/60" aria-live="polite">
+            <p className="mt-2 text-xs text-stone" aria-live="polite">
               {copied ? "Copied" : "Tap to copy"}
             </p>
-            <p className="mt-4 text-sm leading-relaxed text-charcoal/80">{offer.successBody}</p>
-            <button
-              type="button"
-              onClick={close}
-              className="mt-6 w-full rounded-full bg-navy px-6 py-3 text-sm uppercase tracking-widest text-white hover:opacity-90"
-            >
+            <p className="mt-4 text-[0.9375rem] text-stone">{offer.successBody}</p>
+            <Button type="button" onClick={close} size="lg" className="mt-6 w-full">
               Start shopping
-            </button>
+            </Button>
           </div>
         ) : result ? (
           <div className="text-center">
-            <h2 id="welcome-title" className="font-serif text-2xl font-semibold text-navy">
+            <h2 id="welcome-title" className="text-3xl text-ink">
               Thank you
             </h2>
-            <p className="mt-4 text-sm leading-relaxed text-charcoal/80">{RESULT_COPY[result.status]}</p>
-            <button
-              type="button"
-              onClick={close}
-              className="mt-6 w-full rounded-full bg-navy px-6 py-3 text-sm uppercase tracking-widest text-white hover:opacity-90"
-            >
+            <p className="mt-4 text-[0.9375rem] text-stone">{RESULT_COPY[result.status]}</p>
+            <Button type="button" onClick={close} size="lg" className="mt-6 w-full">
               Close
-            </button>
+            </Button>
           </div>
         ) : (
           <form onSubmit={submit}>
-            <p className="text-xs uppercase tracking-[0.25em] text-gold">New here?</p>
-            <h2 id="welcome-title" className="mt-2 font-serif text-2xl font-semibold text-navy">
+            <h2 id="welcome-title" className="text-3xl text-ink">
               {offer.title}
             </h2>
-            <p className="mt-3 text-sm leading-relaxed text-charcoal/80">{offer.body}</p>
+            <p className="mt-3 text-[0.9375rem] text-stone">{offer.body}</p>
             <label htmlFor="welcome-email" className="sr-only">
               Email address
             </label>
@@ -175,10 +169,10 @@ export function WelcomeOffer({ offer }: { offer: SiteSettings["welcomeOffer"] })
               placeholder="you@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="mt-5 w-full rounded-md border border-cream bg-white px-4 py-3 text-sm text-charcoal outline-none focus:border-navy"
+              className={`mt-6 ${controlClass}`}
             />
-            <label className="mt-3 flex items-start gap-2 text-xs leading-relaxed text-charcoal/70">
-              <input type="checkbox" required checked={consent} onChange={(e) => setConsent(e.target.checked)} className="mt-0.5" />
+            <label className="mt-3 flex items-start gap-2.5 text-sm text-stone">
+              <input type="checkbox" required checked={consent} onChange={(e) => setConsent(e.target.checked)} className="mt-1 size-4 accent-ink" />
               Email me offers and news. I can unsubscribe at any time.
             </label>
             {error && (
@@ -186,14 +180,10 @@ export function WelcomeOffer({ offer }: { offer: SiteSettings["welcomeOffer"] })
                 {error}
               </p>
             )}
-            <button
-              type="submit"
-              disabled={pending}
-              className="mt-5 w-full rounded-full bg-navy px-6 py-3 text-sm uppercase tracking-widest text-white hover:opacity-90 disabled:opacity-60"
-            >
-              {pending ? "Sending…" : offer.buttonLabel}
-            </button>
-            <button type="button" onClick={close} className="mt-3 w-full text-xs text-charcoal/60 underline-offset-4 hover:underline">
+            <Button type="submit" loading={pending} size="lg" className="mt-5 w-full">
+              {offer.buttonLabel}
+            </Button>
+            <button type="button" onClick={close} className="mt-2 w-full py-2 text-sm text-stone underline-offset-4 hover:text-ink hover:underline">
               No thanks
             </button>
           </form>

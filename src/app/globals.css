@@ -96,22 +96,24 @@
   --container-prose: 68ch;
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-sans);
-  font-feature-settings: "kern", "liga";
-}
+@layer base {
+  body {
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+    font-feature-settings: "kern", "liga";
+  }
 
-h1,
-h2,
-h3,
-h4 {
-  font-family: var(--font-display);
-  font-weight: 400;
-  font-variation-settings: "SOFT" 50;
-  letter-spacing: -0.01em;
-  text-wrap: balance;
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-variation-settings: "SOFT" 50;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+  }
 }
 
 .tabular {
@@ -211,6 +213,10 @@ h4 {
   }
 }
 
-.admin-root :is(h1, h2, h3, h4) {
-  font-family: var(--font-sans);
+@layer base {
+  .admin-root :is(h1, h2, h3, h4) {
+    font-family: var(--font-sans);
+    font-variation-settings: normal;
+    letter-spacing: normal;
+  }
 }
