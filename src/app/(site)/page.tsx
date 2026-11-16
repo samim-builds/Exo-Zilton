@@ -1,4 +1,4 @@
-import { GrindStory } from "@/components/story/GrindStory";
+import { HeroCarousel } from "@/components/home/HeroCarousel";
 import { FeaturedProducts } from "@/components/home/FeaturedProducts";
 import { FeatureGrid } from "@/components/home/FeatureGrid";
 import { ScrollStorytelling } from "@/components/home/ScrollStorytelling";
@@ -17,7 +17,7 @@ export default function HomePage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <GrindStory />
+      <HeroCarousel />
       <TrustBar />
       <FeaturedProducts />
       <FeatureGrid />
