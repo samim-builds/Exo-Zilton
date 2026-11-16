@@ -62,9 +62,9 @@ export function HeroCarousel({ data }: { data: SectionData<"hero-carousel"> }) {
           </div>
         </div>
 
-        <div className="hero-in-late relative -mx-4 sm:mx-0 lg:col-span-6 xl:col-span-7 lg:-mr-[max(2rem,calc((100vw-72rem)/2+2rem))]">
-          <div className="relative aspect-[4/3] bg-glaze sm:rounded-[2px] lg:aspect-auto lg:h-[min(34rem,calc(100svh-11rem))] lg:rounded-r-none">
-            <div ref={emblaRef} className="absolute inset-0 overflow-hidden sm:rounded-[2px] lg:rounded-r-none">
+        <div className="hero-in-late relative -mx-4 sm:mx-0 lg:col-span-6 xl:col-span-7">
+          <div className="relative aspect-[4/3] bg-glaze sm:rounded-[2px] lg:aspect-auto lg:h-[min(34rem,calc(100svh-11rem))]">
+            <div ref={emblaRef} className="absolute inset-0 overflow-hidden sm:rounded-[2px]">
               <div className="flex h-full">
                 {slides.map((slide, index) => (
                   <div key={index} className="relative h-full min-w-0 flex-[0_0_100%]" aria-roledescription="slide" aria-label={`${index + 1} of ${slides.length}`}>
@@ -74,7 +74,7 @@ export function HeroCarousel({ data }: { data: SectionData<"hero-carousel"> }) {
                       fill
                       priority={index === 0}
                       className="object-cover object-center"
-                      sizes="(max-width: 1024px) 100vw, 60vw"
+                      sizes="(max-width: 1024px) 100vw, 640px"
                     />
                   </div>
                 ))}
