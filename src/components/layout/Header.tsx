@@ -2,92 +2,104 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
-import { navLinks, siteConfig } from "@/lib/site";
+import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
+import { Menu, ShoppingBag, X } from "lucide-react";
+import type { SiteSettings } from "@/lib/cms/settings";
 import { buildGeneralWhatsAppUrl } from "@/lib/whatsapp";
+import { useCart } from "@/components/cart/CartProvider";
+import { cn } from "@/lib/utils";
 
-export function Header() {
+function isCurrent(pathname: string, href: string): boolean {
+  if (href === "/") return pathname === "/";
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
+
+export function Header({ contact, links }: { contact: SiteSettings["contact"]; links: SiteSettings["navigation"]["header"] }) {
   const [open, setOpen] = useState(false);
+  const pathname = usePathname();
+  const { count } = useCart();
+
+  // Lock page scroll while the mobile menu is open.
+  useEffect(() => {
+    document.body.style.overflow = open ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [open]);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-cream bg-white/95 backdrop-blur-sm">
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
-        <Link href="/" className="flex items-center gap-3" onClick={() => setOpen(false)}>
-          <Image
-            src="/brand/logo.png"
-            alt={`${siteConfig.name} logo`}
-            width={48}
-            height={48}
-            priority
-            className="rounded-full"
-          />
-          <div className="hidden sm:block">
-            <p className="font-serif text-lg font-semibold tracking-wide text-navy">
-              {siteConfig.name}
-            </p>
-            <p className="text-xs uppercase tracking-[0.2em] text-gold">
-              {siteConfig.tagline}
-            </p>
-          </div>
+    <header className="sticky top-0 z-50 border-b border-glaze bg-porcelain/95 backdrop-blur-sm">
+      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-6 px-4 sm:px-6 lg:h-[4.5rem] lg:px-8">
+        <Link href="/" className="flex items-center gap-2.5" onClick={() => setOpen(false)}>
+          <Image src="/brand/logo.png" alt="" width={32} height={32} priority className="size-8 rounded-full" />
+          <span className="font-display text-xl text-ink [font-variation-settings:'SOFT'_100,'opsz'_36]">{contact.siteName}</span>
         </Link>
 
-        <nav className="hidden items-center gap-8 md:flex" aria-label="Main navigation">
-          {navLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className="text-sm uppercase tracking-widest text-charcoal transition-colors hover:text-navy"
-            >
-              {link.label}
-            </Link>
-          ))}
+        <nav className="hidden items-center gap-8 md:flex" aria-label="Main">
+          {links.map((link) => {
+            const current = isCurrent(pathname, link.href);
+            return (
+              <Link
+                key={link.href}
+                href={link.href}
+                aria-current={current ? "page" : undefined}
+                className={cn(
+                  "relative py-2 text-[0.9375rem] text-ink/75 transition-colors hover:text-ink",
+                  current && "text-ink after:absolute after:inset-x-0 after:-bottom-0.5 after:h-px after:bg-bronze",
+                )}
+              >
+                {link.label}
+              </Link>
+            );
+          })}
         </nav>
 
-        <div className="flex items-center gap-3">
-          <a
-            href={buildGeneralWhatsAppUrl()}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="hidden rounded-full bg-[#25D366] px-5 py-2.5 text-sm font-medium text-white transition-opacity hover:opacity-90 sm:inline-flex"
+        <div className="flex items-center gap-1">
+          <Link
+            href="/cart"
+            aria-label={`Cart, ${count} item${count === 1 ? "" : "s"}`}
+            className="relative flex size-11 items-center justify-center rounded-full text-ink transition-colors hover:bg-ink/[0.05]"
           >
-            WhatsApp
-          </a>
+            <ShoppingBag className="size-5" strokeWidth={1.6} />
+            {count > 0 && (
+              <span className="tabular absolute top-1.5 right-1 flex h-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full bg-ink px-1 text-[0.6875rem] font-medium text-porcelain">
+                {count}
+              </span>
+            )}
+          </Link>
           <button
             type="button"
-            className="inline-flex flex-col gap-1.5 p-2 md:hidden"
+            className="flex size-11 items-center justify-center rounded-full text-ink hover:bg-ink/[0.05] md:hidden"
             aria-expanded={open}
-            aria-label="Toggle menu"
+            aria-controls="mobile-menu"
+            aria-label={open ? "Close menu" : "Open menu"}
             onClick={() => setOpen(!open)}
           >
-            <span className={`block h-0.5 w-6 bg-navy transition-transform ${open ? "translate-y-2 rotate-45" : ""}`} />
-            <span className={`block h-0.5 w-6 bg-navy transition-opacity ${open ? "opacity-0" : ""}`} />
-            <span className={`block h-0.5 w-6 bg-navy transition-transform ${open ? "-translate-y-2 -rotate-45" : ""}`} />
+            {open ? <X className="size-5" strokeWidth={1.6} /> : <Menu className="size-5" strokeWidth={1.6} />}
           </button>
         </div>
       </div>
 
       {open && (
-        <nav className="border-t border-cream bg-white px-4 py-4 md:hidden" aria-label="Mobile navigation">
-          <div className="flex flex-col gap-4">
-            {navLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="text-sm uppercase tracking-widest text-charcoal"
-                onClick={() => setOpen(false)}
-              >
-                {link.label}
-              </Link>
+        <nav id="mobile-menu" className="fixed inset-x-0 top-16 bottom-0 overflow-y-auto bg-porcelain px-4 pt-4 pb-10 md:hidden" aria-label="Main">
+          <ul className="divide-y divide-glaze border-b border-glaze">
+            {links.map((link) => (
+              <li key={link.href}>
+                <Link
+                  href={link.href}
+                  aria-current={isCurrent(pathname, link.href) ? "page" : undefined}
+                  className="flex py-4 font-display text-2xl text-ink"
+                  onClick={() => setOpen(false)}
+                >
+                  {link.label}
+                </Link>
+              </li>
             ))}
-            <a
-              href={buildGeneralWhatsAppUrl()}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex justify-center rounded-full bg-[#25D366] px-5 py-2.5 text-sm font-medium text-white"
-            >
-              Order via WhatsApp
-            </a>
-          </div>
+          </ul>
+          <a href={buildGeneralWhatsAppUrl()} target="_blank" rel="noopener noreferrer" className="mt-6 inline-flex py-2 text-[0.9375rem] text-ink underline decoration-ink/30 underline-offset-4">
+            Order on WhatsApp
+          </a>
         </nav>
       )}
     </header>

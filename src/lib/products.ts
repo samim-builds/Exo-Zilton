@@ -1,10 +1,12 @@
-export type { Product, ProductWithId } from "./product-types";
+export type { CatalogProduct, CatalogVariant, Product } from "./product-types";
 export {
+  getCatalog,
+  getCategories,
+  getCategoryPage,
   getPublishedProducts,
-  getProductBySlug,
+  getShopCategories,
   getAllProductSlugs,
-  getAllProductsAdmin,
-  getProductByIdAdmin,
+  lookupProduct,
 } from "./products-server";
 
 // Legacy static exports for seed/scripts

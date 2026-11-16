@@ -1,67 +1,78 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import Link from "next/link";
+import { ChevronRight } from "lucide-react";
 import { ProductGallery } from "@/components/products/ProductGallery";
-import { SizeSelector } from "@/components/products/SizeSelector";
+import { VariantSelector } from "@/components/products/VariantSelector";
 import { ProductActions } from "@/components/products/ProductActions";
 import { ProductAccordion } from "@/components/products/ProductAccordion";
+import { BundleContents } from "@/components/products/BundleContents";
 import { BrandBanner } from "@/components/home/BrandBanner";
-import {
-  getProductBySlug,
-  getAllProductSlugs,
-  getPublishedProducts,
-} from "@/lib/products";
-import { buildMetadata, productJsonLd, breadcrumbJsonLd, faqJsonLd } from "@/lib/seo";
-import { formatDiameter } from "@/lib/format";
-
-export const revalidate = 60;
+import { Price } from "@/components/site/Price";
+import { getPage } from "@/lib/cms/server";
+import { sectionDefaults } from "@/lib/cms/sections";
+import { lookupProduct, type CatalogProduct, type CatalogVariant } from "@/lib/products";
+import { resolveVariant, variantHref } from "@/lib/catalog/storefront";
+import { buildMetadata, productGroupJsonLd, breadcrumbJsonLd, faqJsonLd } from "@/lib/seo";
 
 type PageProps = {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
-export async function generateStaticParams() {
-  const slugs = await getAllProductSlugs();
-  return slugs.map((slug) => ({ slug }));
+// Product-wide specs plus the selected variant's size and dimensions.
+function variantSpecs(product: CatalogProduct, variant: CatalogVariant): Record<string, string> {
+  // Variant values win: migrated products carry the first size's Size/Diameter/Capacity in specs.
+  return {
+    ...product.specs,
+    ...Object.fromEntries(
+      product.options.map((o) => [o.name, o.values.find((v) => v.slug === variant.selection[o.param])?.value ?? ""]),
+    ),
+    ...(variant.diameterCm > 0 && { Diameter: `${variant.diameterCm}cm` }),
+    ...(variant.capacityMl > 0 && { Capacity: `${variant.capacityMl}ml` }),
+  };
 }
 
-export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const { slug } = await params;
-  const product = await getProductBySlug(slug);
+async function resolvePage({ params, searchParams }: PageProps) {
+  const [{ slug }, query] = await Promise.all([params, searchParams]);
+  const found = await lookupProduct(slug);
+  if (!found) notFound();
+  // Old per-size URLs (/products/mortar-and-pestle-size-3) moved to the product page with that size selected.
+  if (found.kind === "legacy") permanentRedirect(variantHref(found.product, found.variant));
+  const product = found.product;
+  const variant = resolveVariant(product, query);
+  return { product, variant, href: variantHref(product, variant) };
+}
 
-  if (!product) {
-    return { title: "Product Not Found" };
-  }
+export async function generateMetadata(props: PageProps): Promise<Metadata> {
+  const { product, variant, href } = await resolvePage(props);
+  const title = product.options.length > 0 && variant.title ? `${product.name} - ${variant.title}` : product.name;
 
   return buildMetadata({
-    title: product.name,
-    description: product.description,
-    path: `/products/${product.slug}`,
-    image: product.images[0],
+    title: product.seoTitle || title,
+    description: product.seoDescription || product.description,
+    path: href,
+    image: variant.images[0]?.url,
     keywords: [
       "porcelain mortar and pestle",
-      product.size,
-      `${product.diameterCm}cm mortar pestle`,
+      variant.title,
+      ...(variant.diameterCm > 0 ? [`${variant.diameterCm}cm mortar pestle`] : []),
       "Exo Zilton",
-    ],
+    ].filter(Boolean),
   });
 }
 
-export default async function ProductPage({ params }: PageProps) {
-  const { slug } = await params;
-  const [product, allProducts] = await Promise.all([
-    getProductBySlug(slug),
-    getPublishedProducts(),
-  ]);
+export default async function ProductPage(props: PageProps) {
+  const { product, variant, href } = await resolvePage(props);
+  // The product page reuses the homepage brand banner so both stay in step.
+  const homeBanner = (await getPage("home"))?.sections.find((s) => s.type === "brand-banner");
+  const banner = homeBanner?.type === "brand-banner" ? homeBanner.data : sectionDefaults("brand-banner");
 
-  if (!product) {
-    notFound();
-  }
-
-  const productLd = productJsonLd(product);
+  const productLd = productGroupJsonLd(product);
   const breadcrumbLd = breadcrumbJsonLd([
     { name: "Home", path: "/" },
     { name: "Products", path: "/products" },
+    ...(product.category ? [{ name: product.category.name, path: `/categories/${product.category.slug}` }] : []),
     { name: product.name, path: `/products/${product.slug}` },
   ]);
 
@@ -95,36 +106,72 @@ export default async function ProductPage({ params }: PageProps) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqLd) }}
       />
 
-      <div className="py-8 sm:py-12">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <nav aria-label="Breadcrumb" className="mb-8 text-sm text-charcoal/60">
-            <Link href="/" className="hover:text-navy">
-              Home
-            </Link>
-            <span className="mx-2">/</span>
-            <Link href="/products" className="hover:text-navy">
-              Products
-            </Link>
-            <span className="mx-2">/</span>
-            <span className="text-navy">{product.name}</span>
+      <div className="pt-6 pb-20 sm:pt-10 sm:pb-28">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+          <nav aria-label="Breadcrumb" className="mb-8 text-sm text-stone">
+            <ol className="flex flex-wrap items-center gap-1.5">
+              <li>
+                <Link href="/" className="hover:text-ink">
+                  Home
+                </Link>
+              </li>
+              <li aria-hidden><ChevronRight className="size-3.5 text-stone/60" /></li>
+              <li>
+                <Link href="/products" className="hover:text-ink">
+                  Products
+                </Link>
+              </li>
+              {product.category && (
+                <>
+                  <li aria-hidden><ChevronRight className="size-3.5 text-stone/60" /></li>
+                  <li>
+                    <Link href={`/categories/${product.category.slug}`} className="hover:text-ink">
+                      {product.category.name}
+                    </Link>
+                  </li>
+                </>
+              )}
+              <li aria-hidden><ChevronRight className="size-3.5 text-stone/60" /></li>
+              <li aria-current="page" className="text-ink">
+                {product.name}
+              </li>
+            </ol>
           </nav>
 
-          <h1 className="mb-8 font-serif text-3xl font-semibold text-navy sm:text-4xl">
-            {product.name}
-          </h1>
+          <div className="grid grid-cols-1 items-start gap-10 lg:grid-cols-12 lg:gap-14">
+            <div className="lg:col-span-7">
+              <ProductGallery key={variant.key} images={variant.images.map((img) => img.url)} productName={product.name} />
+            </div>
 
-          <div className="grid gap-12 lg:grid-cols-2">
-            <ProductGallery images={product.images} productName={product.name} />
-
-            <div>
-              <SizeSelector products={allProducts} currentSlug={product.slug} />
+            <div className="lg:sticky lg:top-24 lg:col-span-5 lg:self-start">
+              {product.category && <p className="text-sm text-stone">{product.category.name}</p>}
+              <h1 className="mt-2 text-4xl text-ink sm:text-[2.75rem] sm:leading-[1.08]">{product.name}</h1>
+              {product.subtitle && <p className="mt-3 text-base text-stone">{product.subtitle}</p>}
+              <Price
+                size="lg"
+                className="mt-5"
+                pricePKR={variant.pricePKR}
+                priceUSD={variant.priceUSD}
+                compareAtPKR={variant.compareAtPKR}
+                compareAtUSD={variant.compareAtUSD}
+              />
+              {product.bundle && (
+                <div className="mt-8">
+                  <BundleContents items={product.bundle.items} />
+                </div>
+              )}
+              {product.options.length > 0 && (
+                <div className="mt-8">
+                  <VariantSelector product={product} current={variant} />
+                </div>
+              )}
               <div className="mt-8">
-                <ProductActions product={product} />
+                <ProductActions key={variant.key} product={product} variant={variant} href={href} />
               </div>
             </div>
           </div>
 
-          <div className="mt-16">
+          <div className="mt-20 lg:mt-28">
             <ProductAccordion
               items={[
                 {
@@ -133,7 +180,7 @@ export default async function ProductPage({ params }: PageProps) {
                   content: (
                     <div>
                       <p>{product.description}</p>
-                      <ul className="mt-4 list-disc space-y-2 pl-5">
+                      <ul className="mt-4 list-disc space-y-2 pl-5 marker:text-bronze">
                         {product.features.map((feature) => (
                           <li key={feature}>{feature}</li>
                         ))}
@@ -147,10 +194,10 @@ export default async function ProductPage({ params }: PageProps) {
                   content: (
                     <table className="w-full text-left">
                       <tbody>
-                        {Object.entries(product.specs).map(([key, value]) => (
-                          <tr key={key} className="border-b border-cream">
-                            <th className="py-2 pr-4 font-medium text-navy">{key}</th>
-                            <td className="py-2">{value}</td>
+                        {Object.entries(variantSpecs(product, variant)).map(([key, value]) => (
+                          <tr key={key} className="border-b border-glaze last:border-0">
+                            <th scope="row" className="py-2.5 pr-6 font-medium text-ink">{key}</th>
+                            <td className="tabular py-2.5">{value}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -159,9 +206,9 @@ export default async function ProductPage({ params }: PageProps) {
                 },
                 {
                   id: "care",
-                  title: "Care Instructions",
+                  title: "Care",
                   content: (
-                    <ul className="list-disc space-y-2 pl-5">
+                    <ul className="list-disc space-y-2 pl-5 marker:text-bronze">
                       {product.careInstructions.map((item) => (
                         <li key={item}>{item}</li>
                       ))}
@@ -170,20 +217,17 @@ export default async function ProductPage({ params }: PageProps) {
                 },
                 {
                   id: "delivery",
-                  title: "Delivery & Returns",
+                  title: "Delivery and returns",
                   content: <p>{product.deliveryInfo}</p>,
                 },
               ]}
             />
           </div>
 
-          <p className="mt-8 text-center text-sm text-charcoal/60">
-            {product.size} — {formatDiameter(product.diameterCm)}
-          </p>
         </div>
       </div>
 
-      <BrandBanner />
+      <BrandBanner data={banner} />
     </>
   );
 }

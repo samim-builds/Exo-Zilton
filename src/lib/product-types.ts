@@ -1,6 +1,62 @@
-import type { Product as DbProduct, ProductImage } from "@/generated/prisma/client";
+// Storefront view types. Client-safe: no server imports.
 
+export type ProductImageView = { url: string; alt: string };
+
+export type CatalogOption = {
+  name: string;
+  /** URL search param for this option, e.g. "size". */
+  param: string;
+  values: { value: string; slug: string }[];
+};
+
+export type CatalogVariant = {
+  /** Cart/order key: the variant id, or a synthetic key for rows without variants. */
+  key: string;
+  id?: string;
+  sku: string;
+  title: string;
+  /** Option param → value slug, e.g. { size: "size-3" }. */
+  selection: Record<string, string>;
+  pricePKR: number;
+  priceUSD: number;
+  compareAtPKR: number | null;
+  compareAtUSD: number | null;
+  inStock: boolean;
+  diameterCm: number;
+  capacityMl: number;
+  images: ProductImageView[];
+  legacySlug: string | null;
+  isDefault: boolean;
+};
+
+export type CatalogProduct = {
+  id?: string;
+  slug: string;
+  name: string;
+  subtitle: string | null;
+  description: string;
+  features: string[];
+  careInstructions: string[];
+  deliveryInfo: string;
+  specs: Record<string, string>;
+  category: { slug: string; name: string } | null;
+  seoTitle?: string | null;
+  seoDescription?: string | null;
+  options: CatalogOption[];
+  variants: CatalogVariant[];
+  /** Set for bundles: what one bundle contains. */
+  bundle?: { items: BundleContent[] };
+};
+
+export type BundleContent = { variantId: string; sku: string; name: string; quantity: number; href: string };
+
+/** One listing card: a single variant of a product. */
 export type Product = {
+  productId?: string;
+  variantId?: string;
+  variantKey: string;
+  /** Product page URL with this variant selected. */
+  href: string;
   slug: string;
   name: string;
   sku: string;
@@ -9,42 +65,16 @@ export type Product = {
   capacityMl: number;
   pricePKR: number;
   priceUSD: number;
+  compareAtPKR?: number | null;
+  compareAtUSD?: number | null;
+  /** Bundles only: how many items one bundle holds. */
+  bundleItemCount?: number;
   inStock: boolean;
   images: string[];
-  imageAlts?: { url: string; alt: string }[];
+  imageAlts?: ProductImageView[];
   features: string[];
   specs: Record<string, string>;
   description: string;
   careInstructions: string[];
   deliveryInfo: string;
 };
-
-export type ProductWithId = Product & { id: string; published: boolean; sortOrder: number };
-
-export function mapDbProduct(
-  product: DbProduct & { images: ProductImage[] },
-): ProductWithId {
-  const sortedImages = [...product.images].sort((a, b) => a.sortOrder - b.sortOrder);
-
-  return {
-    id: product.id,
-    slug: product.slug,
-    name: product.name,
-    sku: product.sku,
-    size: product.size,
-    diameterCm: product.diameterCm,
-    capacityMl: product.capacityMl,
-    pricePKR: product.pricePKR,
-    priceUSD: product.priceUSD,
-    inStock: product.inStock,
-    published: product.published,
-    sortOrder: product.sortOrder,
-    images: sortedImages.map((img) => img.url),
-    imageAlts: sortedImages.map((img) => ({ url: img.url, alt: img.alt })),
-    features: product.features,
-    specs: product.specs as Record<string, string>,
-    description: product.description,
-    careInstructions: product.careInstructions,
-    deliveryInfo: product.deliveryInfo,
-  };
-}

@@ -7,34 +7,506 @@ datasource db {
   provider = "postgresql"
 }
 
+enum ProductStatus {
+  DRAFT
+  ACTIVE
+  ARCHIVED
+}
+
+enum ProductKind {
+  STANDARD
+  BUNDLE
+}
+
+enum AttributeType {
+  TEXT
+  NUMBER
+  SELECT
+  BOOLEAN
+}
+
+enum AttributeScope {
+  PRODUCT
+  VARIANT
+}
+
+model Category {
+  id             String              @id @default(cuid())
+  slug           String              @unique
+  name           String
+  description    String?
+  imageUrl       String?
+  parentId       String?
+  parent         Category?           @relation("CategoryTree", fields: [parentId], references: [id], onDelete: SetNull)
+  children       Category[]          @relation("CategoryTree")
+  sortOrder      Int                 @default(0)
+  published      Boolean             @default(true)
+  seoTitle       String?
+  seoDescription String?
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+  attributes     CategoryAttribute[]
+  products       Product[]
+}
+
+// Spec fields for a product type (e.g. diameter for mortars). Child
+// categories inherit their ancestors' attributes.
+model CategoryAttribute {
+  id         String         @id @default(cuid())
+  categoryId String
+  category   Category       @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  key        String
+  label      String
+  type       AttributeType  @default(TEXT)
+  unit       String?
+  options    String[]
+  scope      AttributeScope @default(PRODUCT)
+  required   Boolean        @default(false)
+  sortOrder  Int            @default(0)
+
+  @@unique([categoryId, key])
+}
+
 model Product {
-  id               String         @id @default(cuid())
-  slug             String         @unique
-  name             String
-  sku              String         @unique
+  id                    String            @id @default(cuid())
+  slug                  String            @unique
+  name                  String
+  subtitle              String?
+  kind                  ProductKind       @default(STANDARD)
+  status                ProductStatus     @default(ACTIVE)
+  categoryId            String?
+  category              Category?         @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  description           String
+  features              String[]
+  careInstructions      String[]
+  deliveryInfo          String
+  specs                 Json
+  attributes            Json              @default("{}")
+  tags                  String[]
+  featured              Boolean           @default(false)
+  sortOrder             Int               @default(0)
+  seoTitle              String?
+  seoDescription        String?
+  // Bundles only: FIXED uses the bundle variant's own prices; PERCENT_OFF prices it
+  // from the components less bundleDiscountPercent.
+  bundlePricingMode     BundlePricingMode @default(FIXED)
+  bundleDiscountPercent Int?
+  createdAt             DateTime          @default(now())
+  updatedAt             DateTime          @updatedAt
+  images                ProductImage[]
+  options               ProductOption[]
+  variants              ProductVariant[]
+  orderItems            OrderItem[]
+  bundleItems           BundleItem[]
+
+  // Legacy per-size columns, kept nullable while the previous deployment still
+  // reads them. Dropped in a later contract migration.
+  sku        String? @unique
+  size       String?
+  diameterCm Float?
+  capacityMl Int?
+  pricePKR   Int?
+  priceUSD   Int?
+  inStock    Boolean @default(true)
+  published  Boolean @default(true)
+}
+
+model ProductOption {
+  id        String               @id @default(cuid())
+  productId String
+  product   Product              @relation(fields: [productId], references: [id], onDelete: Cascade)
+  name      String
+  position  Int                  @default(0)
+  values    ProductOptionValue[]
+
+  @@unique([productId, name])
+}
+
+model ProductOptionValue {
+  id       String               @id @default(cuid())
+  optionId String
+  option   ProductOption        @relation(fields: [optionId], references: [id], onDelete: Cascade)
+  value    String
+  slug     String
+  position Int                  @default(0)
+  variants VariantOptionValue[]
+
+  @@unique([optionId, slug])
+}
+
+model ProductVariant {
+  id                String               @id @default(cuid())
+  productId         String
+  product           Product              @relation(fields: [productId], references: [id], onDelete: Cascade)
+  sku               String               @unique
+  title             String
+  pricePKR          Int
+  priceUSD          Int
+  compareAtPKR      Int?
+  compareAtUSD      Int?
+  costPKR           Int?
+  trackInventory    Boolean              @default(false)
+  stockQty          Int                  @default(0)
+  lowStockThreshold Int                  @default(5)
+  weightGrams       Int?
+  attributes        Json                 @default("{}")
+  legacySlug        String?              @unique
+  position          Int                  @default(0)
+  active            Boolean              @default(true)
+  isDefault         Boolean              @default(false)
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
+  optionValues      VariantOptionValue[]
+  images            ProductImage[]
+  orderItems        OrderItem[]
+  movements         InventoryMovement[]
+  // Bundles this variant is a component of.
+  inBundles         BundleItem[]
+
+  @@index([productId, position])
+}
+
+model VariantOptionValue {
+  variantId     String
+  variant       ProductVariant     @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  optionValueId String
+  optionValue   ProductOptionValue @relation(fields: [optionValueId], references: [id], onDelete: Cascade)
+
+  @@id([variantId, optionValueId])
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+enum PaymentMethod {
+  COD
+  PAY_ON_CONFIRMATION
+}
+
+model Customer {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  phone     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  orders    Order[]
+}
+
+model Order {
+  id                  String               @id @default(cuid())
+  number              Int                  @unique @default(autoincrement())
+  customerId          String
+  customer            Customer             @relation(fields: [customerId], references: [id])
+  status              OrderStatus          @default(PENDING)
+  paymentMethod       PaymentMethod
+  paid                Boolean              @default(false)
+  currency            String
+  subtotal            Int
+  shipping            Int                  @default(0)
+  total               Int
+  name                String
+  email               String
+  phone               String
+  addressLine         String
+  city                String
+  postalCode          String?
+  country             String
+  notes               String?
+  courier             String?
+  trackingNumber      String?
+  // Last 10 digits of phone, for the first-order and per-customer checks.
+  phoneNormalized     String?
+  discountCode        String?
+  discountAmount      Int                  @default(0)
+  voucherCode         String?
+  voucherAmount       Int                  @default(0)
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  items               OrderItem[]
+  discountRedemptions DiscountRedemption[]
+  voucherTransactions VoucherTransaction[]
+
+  @@index([status, createdAt])
+  @@index([email])
+  @@index([phoneNormalized])
+}
+
+model OrderItem {
+  id               String          @id @default(cuid())
+  orderId          String
+  order            Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId        String?
+  product          Product?        @relation(fields: [productId], references: [id], onDelete: SetNull)
+  variantId        String?
+  variant          ProductVariant? @relation(fields: [variantId], references: [id], onDelete: SetNull)
+  productName      String
+  sku              String
   size             String
-  diameterCm       Float
-  capacityMl       Int
-  pricePKR         Int
-  priceUSD         Int
-  inStock          Boolean        @default(true)
-  published        Boolean        @default(true)
-  description      String
-  features         String[]
-  specs            Json
-  careInstructions String[]
-  deliveryInfo     String
-  sortOrder        Int            @default(0)
-  createdAt        DateTime       @default(now())
-  updatedAt        DateTime       @updatedAt
-  images           ProductImage[]
+  unitPrice        Int
+  quantity         Int
+  // For bundle lines: [{ variantId, sku, name, quantity }] per bundle, as sold.
+  bundleComponents Json?
 }
 
 model ProductImage {
-  id        String  @id @default(cuid())
+  id        String          @id @default(cuid())
   productId String
-  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  product   Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
+  variantId String?
+  variant   ProductVariant? @relation(fields: [variantId], references: [id], onDelete: SetNull)
   url       String
   alt       String
-  sortOrder Int     @default(0)
+  sortOrder Int             @default(0)
+}
+
+enum ActivityAction {
+  CREATE
+  UPDATE
+  DELETE
+  PUBLISH
+  STATUS
+}
+
+// Audit trail of admin changes. There is one shared admin login, so entries
+// record the request origin rather than a user.
+model ActivityLog {
+  id         String         @id @default(cuid())
+  entityType String
+  entityId   String
+  action     ActivityAction
+  summary    String
+  diff       Json?
+  ip         String?
+  userAgent  String?
+  createdAt  DateTime       @default(now())
+
+  @@index([entityType, entityId])
+  @@index([createdAt])
+}
+
+model MediaAsset {
+  id        String   @id @default(cuid())
+  url       String   @unique
+  pathname  String
+  alt       String   @default("")
+  mime      String
+  size      Int
+  width     Int?
+  height    Int?
+  folder    String   @default("general")
+  createdAt DateTime @default(now())
+
+  @@index([folder, createdAt])
+}
+
+model LoginAttempt {
+  id        String   @id @default(cuid())
+  ip        String
+  success   Boolean
+  createdAt DateTime @default(now())
+
+  @@index([ip, createdAt])
+}
+
+enum DiscountType {
+  PERCENT
+  FIXED
+  FREE_SHIPPING
+}
+
+enum DiscountScope {
+  ALL
+  CATEGORIES
+  PRODUCTS
+}
+
+enum DiscountKind {
+  STANDARD
+  WELCOME
+}
+
+model Discount {
+  id               String               @id @default(cuid())
+  code             String               @unique
+  title            String
+  type             DiscountType
+  percentOff       Int?
+  valuePKR         Int?
+  valueUSD         Int?
+  minSubtotalPKR   Int?
+  minSubtotalUSD   Int?
+  maxDiscountPKR   Int?
+  maxDiscountUSD   Int?
+  appliesTo        DiscountScope        @default(ALL)
+  categoryIds      String[]
+  productIds       String[]
+  startsAt         DateTime?
+  endsAt           DateTime?
+  usageLimit       Int?
+  // Redemptions so far; incremented atomically when an order uses the code.
+  usedCount        Int                  @default(0)
+  perCustomerLimit Int?
+  firstOrderOnly   Boolean              @default(false)
+  // Whether a gift voucher can be used on the same order.
+  combinable       Boolean              @default(true)
+  active           Boolean              @default(true)
+  kind             DiscountKind         @default(STANDARD)
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
+  redemptions      DiscountRedemption[]
+
+  @@index([kind, active])
+}
+
+model DiscountRedemption {
+  id            String   @id @default(cuid())
+  discountId    String
+  discount      Discount @relation(fields: [discountId], references: [id], onDelete: Cascade)
+  orderId       String
+  order         Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  customerEmail String
+  customerPhone String
+  amount        Int
+  currency      String
+  createdAt     DateTime @default(now())
+
+  @@unique([discountId, orderId])
+  @@index([discountId, customerEmail])
+  @@index([discountId, customerPhone])
+}
+
+enum VoucherReason {
+  PURCHASE
+  GIFT
+  REFUND
+  PROMO
+}
+
+enum VoucherTransactionReason {
+  ISSUE
+  REDEEM
+  REFUND
+  ADJUST
+}
+
+model GiftVoucher {
+  id             String               @id @default(cuid())
+  code           String               @unique
+  currency       String
+  initialBalance Int
+  balance        Int
+  expiresAt      DateTime?
+  recipientEmail String?
+  note           String?
+  issuedReason   VoucherReason        @default(GIFT)
+  active         Boolean              @default(true)
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+  transactions   VoucherTransaction[]
+}
+
+model VoucherTransaction {
+  id        String                   @id @default(cuid())
+  voucherId String
+  voucher   GiftVoucher              @relation(fields: [voucherId], references: [id], onDelete: Cascade)
+  orderId   String?
+  order     Order?                   @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  delta     Int
+  reason    VoucherTransactionReason
+  note      String?
+  createdAt DateTime                 @default(now())
+
+  @@index([voucherId, createdAt])
+}
+
+enum PageStatus {
+  DRAFT
+  PUBLISHED
+}
+
+// A CMS page. Sections live as an ordered JSON array validated by the section
+// registry (src/lib/cms/sections.ts); unpublished edits sit in draftSections.
+model Page {
+  id             String     @id @default(cuid())
+  slug           String     @unique
+  title          String
+  isSystem       Boolean    @default(false)
+  status         PageStatus @default(DRAFT)
+  sections       Json       @default("[]")
+  draftSections  Json?
+  seoTitle       String?
+  seoDescription String?
+  ogImageUrl     String?
+  publishedAt    DateTime?
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+}
+
+// Site-wide settings, one row per group ("contact", "navigation", "announcement", "welcomeOffer").
+model SiteSetting {
+  key       String   @id
+  value     Json
+  updatedAt DateTime @updatedAt
+}
+
+model Subscriber {
+  id                String   @id @default(cuid())
+  email             String   @unique
+  source            String   @default("welcome-popup")
+  consent           Boolean  @default(true)
+  welcomeDiscountId String?
+  createdAt         DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+enum InventoryReason {
+  ORDER
+  CANCEL
+  RESTOCK
+  ADJUSTMENT
+  RETURN
+}
+
+// Every stock change, so the on-hand count can be explained. stockQty on the
+// variant is the running total; rows here are written in the same transaction.
+model InventoryMovement {
+  id        String          @id @default(cuid())
+  variantId String
+  variant   ProductVariant  @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  delta     Int
+  // Stock after this movement, for an at-a-glance history.
+  balance   Int
+  reason    InventoryReason
+  orderId   String?
+  note      String?
+  createdAt DateTime        @default(now())
+
+  @@index([variantId, createdAt])
+  @@index([orderId])
+}
+
+enum BundlePricingMode {
+  FIXED
+  PERCENT_OFF
+}
+
+// A component of a bundle product: a variant and how many of it one bundle holds.
+model BundleItem {
+  id              String         @id @default(cuid())
+  bundleProductId String
+  bundle          Product        @relation(fields: [bundleProductId], references: [id], onDelete: Cascade)
+  variantId       String
+  variant         ProductVariant @relation(fields: [variantId], references: [id], onDelete: Restrict)
+  quantity        Int            @default(1)
+  position        Int            @default(0)
+
+  @@unique([bundleProductId, variantId])
+  @@index([variantId])
 }

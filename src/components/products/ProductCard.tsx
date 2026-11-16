@@ -1,41 +1,63 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { Product } from "@/lib/product-types";
-import { formatPKR, formatUSD, formatDiameter } from "@/lib/format";
+import { Price } from "@/components/site/Price";
 
 type ProductCardProps = {
   product: Product;
 };
 
 export function ProductCard({ product }: ProductCardProps) {
+  const primary = product.images[0];
+  const hover = product.images[2] ?? product.images[1];
+  const showHover = Boolean(hover && hover !== primary);
+  const sizes = "(max-width: 1024px) 50vw, 25vw";
+
   return (
-    <article className="group">
-      <Link href={`/products/${product.slug}`} className="block">
-        <div className="relative aspect-square overflow-hidden rounded-lg bg-porcelain">
-          <Image
-            src={product.images[0]}
-            alt={`${product.name} — ${formatDiameter(product.diameterCm)} porcelain mortar and pestle`}
-            fill
-            className="object-contain p-6 transition-transform duration-300 group-hover:scale-105"
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-          />
+    <article>
+      <Link href={product.href} className="group block rounded-[2px] focus-visible:outline-offset-4">
+        <div className="relative aspect-[4/5] overflow-hidden rounded-[2px] bg-white">
+          {primary && (
+            <Image
+              src={primary}
+              alt={product.imageAlts?.[0]?.alt || product.name}
+              fill
+              // The second image only appears on devices that can hover.
+              className={`object-contain p-6 transition-opacity duration-300 motion-reduce:transition-none sm:p-8 ${showHover ? "[@media(hover:hover)]:group-hover:opacity-0" : ""}`}
+              sizes={sizes}
+            />
+          )}
+          {showHover && hover && (
+            <Image
+              src={hover}
+              alt=""
+              fill
+              className="object-contain p-6 opacity-0 transition-opacity duration-300 motion-reduce:transition-none sm:p-8 [@media(hover:hover)]:group-hover:opacity-100"
+              sizes={sizes}
+            />
+          )}
           {!product.inStock && (
-            <span className="absolute left-3 top-3 rounded-full bg-charcoal/80 px-3 py-1 text-xs uppercase tracking-wider text-white">
-              Out of Stock
-            </span>
+            <span className="absolute top-3 left-3 rounded-full bg-porcelain px-2.5 py-1 text-xs font-medium text-ink">Out of stock</span>
           )}
         </div>
-        <div className="mt-4">
-          <h3 className="font-serif text-lg font-semibold text-navy group-hover:underline">
+        <div className="mt-4 space-y-1">
+          <h3 className="font-sans text-[0.9375rem] font-medium text-ink group-hover:underline group-hover:decoration-ink/30 group-hover:underline-offset-4">
             {product.name}
           </h3>
-          <p className="mt-1 text-sm text-charcoal/70">
-            {formatDiameter(product.diameterCm)} · {product.capacityMl}ml
-          </p>
-          <div className="mt-2 flex items-baseline gap-2">
-            <p className="text-lg font-semibold text-navy">{formatPKR(product.pricePKR)}</p>
-            <p className="text-sm text-charcoal/60">{formatUSD(product.priceUSD)}</p>
-          </div>
+          {product.bundleItemCount !== undefined && <p className="text-sm text-stone">Set of {product.bundleItemCount}</p>}
+          {product.diameterCm > 0 && (
+            <p className="text-sm text-stone">
+              {product.diameterCm} cm
+              {product.capacityMl > 0 && `, ${product.capacityMl} ml`}
+            </p>
+          )}
+          <Price
+            pricePKR={product.pricePKR}
+            priceUSD={product.priceUSD}
+            compareAtPKR={product.compareAtPKR}
+            compareAtUSD={product.compareAtUSD}
+            className="pt-1"
+          />
         </div>
       </Link>
     </article>

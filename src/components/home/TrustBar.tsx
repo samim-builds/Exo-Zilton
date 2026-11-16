@@ -1,20 +1,16 @@
-const items = [
-  { label: "Made in Pakistan", description: "Proudly crafted with care" },
-  { label: "Quality Guarantee", description: "Built to last for years" },
-  { label: "Worldwide Inquiries", description: "Ship across Pakistan & abroad" },
-];
+import type { SectionData } from "@/lib/cms/sections";
 
-export function TrustBar() {
+export function TrustBar({ data }: { data: SectionData<"trust-bar"> }) {
   return (
-    <section className="border-y border-cream bg-porcelain py-8">
-      <div className="mx-auto grid max-w-7xl gap-6 px-4 sm:grid-cols-3 sm:px-6 lg:px-8">
-        {items.map((item) => (
-          <div key={item.label} className="text-center">
-            <p className="font-serif text-lg font-semibold text-navy">{item.label}</p>
-            <p className="mt-1 text-sm text-charcoal/70">{item.description}</p>
+    <section className="border-y border-glaze bg-porcelain">
+      <dl className="mx-auto grid max-w-6xl divide-glaze px-4 sm:grid-cols-3 sm:divide-x sm:px-6 lg:px-8">
+        {data.items.map((item, index) => (
+          <div key={index} className="border-b border-glaze py-6 last:border-b-0 sm:border-b-0 sm:px-8 sm:first:pl-0 sm:last:pr-0">
+            <dt className="font-medium text-ink">{item.label}</dt>
+            <dd className="mt-1 text-sm text-stone">{item.description}</dd>
           </div>
         ))}
-      </div>
+      </dl>
     </section>
   );
 }

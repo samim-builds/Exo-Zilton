@@ -1,8 +1,16 @@
-import { put } from "@vercel/blob";
 import { NextResponse } from "next/server";
+import { prisma } from "@/lib/db";
+import { MEDIA_FOLDERS, storeFile, type MediaFolder } from "@/lib/media";
 import { requireAdmin } from "@/lib/session";
-import { writeFile, mkdir } from "fs/promises";
-import path from "path";
+
+// Vercel Functions accept request bodies up to 4.5 MB; the admin client
+// downscales images before uploading so they fit.
+const MAX_BYTES = 4.5 * 1024 * 1024;
+
+function toInt(value: FormDataEntryValue | null): number | null {
+  const n = Number(value);
+  return Number.isInteger(n) && n > 0 ? n : null;
+}
 
 export async function POST(request: Request) {
   try {
@@ -17,22 +25,36 @@ export async function POST(request: Request) {
   if (!file || !(file instanceof File)) {
     return NextResponse.json({ error: "No file provided" }, { status: 400 });
   }
-
   if (!file.type.startsWith("image/")) {
     return NextResponse.json({ error: "File must be an image" }, { status: 400 });
   }
-
-  const filename = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, "-")}`;
-
-  if (process.env.BLOB_READ_WRITE_TOKEN) {
-    const blob = await put(`products/${filename}`, file, { access: "public" });
-    return NextResponse.json({ url: blob.url });
+  if (file.size > MAX_BYTES) {
+    return NextResponse.json({ error: "Image is larger than 4.5 MB" }, { status: 413 });
   }
 
-  const bytes = Buffer.from(await file.arrayBuffer());
-  const uploadDir = path.join(process.cwd(), "public", "uploads");
-  await mkdir(uploadDir, { recursive: true });
-  await writeFile(path.join(uploadDir, filename), bytes);
+  const folderInput = String(formData.get("folder") ?? "general");
+  const folder: MediaFolder = (MEDIA_FOLDERS as readonly string[]).includes(folderInput)
+    ? (folderInput as MediaFolder)
+    : "general";
 
-  return NextResponse.json({ url: `/uploads/${filename}` });
+  const { url, pathname } = await storeFile(file, folder);
+
+  if (!process.env.DATABASE_URL) {
+    return NextResponse.json({ url });
+  }
+
+  const asset = await prisma.mediaAsset.create({
+    data: {
+      url,
+      pathname,
+      alt: String(formData.get("alt") ?? "").slice(0, 300),
+      mime: file.type,
+      size: file.size,
+      width: toInt(formData.get("width")),
+      height: toInt(formData.get("height")),
+      folder,
+    },
+  });
+
+  return NextResponse.json({ url, asset });
 }

@@ -1,0 +1,73 @@
+import "server-only";
+import type { Prisma } from "@/generated/prisma/client";
+import { stockLinesForOrderItems } from "./bundles";
+import { adjustmentDelta, isCommitted, returnRecordedStock, stockMovementsForTransition, type OrderStatusName, type StockAdjustment } from "./inventory";
+
+type Tx = Prisma.TransactionClient;
+
+type MovementInput = {
+  variantId: string;
+  delta: number;
+  reason: "ORDER" | "CANCEL" | "RESTOCK" | "ADJUSTMENT" | "RETURN";
+  orderId?: string | null;
+  note?: string | null;
+};
+
+/** Moves stock and records each movement with the resulting balance. Call inside a transaction. */
+export async function applyMovements(tx: Tx, movements: MovementInput[]): Promise<void> {
+  for (const m of movements) {
+    if (m.delta === 0) continue;
+    const variant = await tx.productVariant.update({
+      where: { id: m.variantId },
+      data: { stockQty: { increment: m.delta } },
+      select: { stockQty: true },
+    });
+    await tx.inventoryMovement.create({
+      data: { variantId: m.variantId, delta: m.delta, balance: variant.stockQty, reason: m.reason, orderId: m.orderId ?? null, note: m.note ?? null },
+    });
+  }
+}
+
+/** Stock changes for an order moving between statuses (see stockMovementsForTransition). */
+export async function applyOrderTransition(tx: Tx, orderId: string, from: OrderStatusName, to: OrderStatusName, orderNumber?: number) {
+  if (from === to) return;
+  const note = orderNumber ? `Order #${orderNumber} ${to.toLowerCase()}` : null;
+
+  // Leaving a committed status gives back what this order's movements took.
+  if (isCommitted(from) && !isCommitted(to)) {
+    const taken = await tx.inventoryMovement.findMany({ where: { orderId }, select: { variantId: true, delta: true } });
+    await applyMovements(
+      tx,
+      returnRecordedStock(taken).map((m) => ({ ...m, orderId, note })),
+    );
+    return;
+  }
+
+  const sold = await tx.orderItem.findMany({ where: { orderId }, select: { variantId: true, quantity: true, bundleComponents: true } });
+  // Bundle lines move the components they were sold with, not the bundle itself.
+  const items = stockLinesForOrderItems(sold);
+  const variantIds = [...new Set(items.flatMap((i) => (i.variantId ? [i.variantId] : [])))];
+  const tracked = await tx.productVariant.findMany({ where: { id: { in: variantIds }, trackInventory: true }, select: { id: true } });
+  const movements = stockMovementsForTransition(from, to, items, new Set(tracked.map((v) => v.id)));
+  await applyMovements(
+    tx,
+    movements.map((m) => ({ ...m, orderId, note })),
+  );
+}
+
+/** Manual stock change from the admin. Returns the new stock level. */
+export async function adjustVariantStock(
+  tx: Tx,
+  variantId: string,
+  adjustment: StockAdjustment,
+  reason: "RESTOCK" | "ADJUSTMENT" | "RETURN",
+  note: string | null,
+): Promise<number> {
+  // Lock the row first so an order confirmed meanwhile can't slip between the
+  // read and the write (a "set to 20" would otherwise land on 18).
+  await tx.$queryRaw`SELECT id FROM "ProductVariant" WHERE id = ${variantId} FOR UPDATE`;
+  const variant = await tx.productVariant.findUniqueOrThrow({ where: { id: variantId }, select: { stockQty: true } });
+  const delta = adjustmentDelta(adjustment, variant.stockQty);
+  await applyMovements(tx, [{ variantId, delta, reason, note }]);
+  return variant.stockQty + delta;
+}

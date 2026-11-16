@@ -9,6 +9,8 @@ import {
   countries,
 } from "@/lib/inquiry-schema";
 import { staticProducts } from "@/lib/products-static";
+import { Button } from "@/components/site/Button";
+import { controlClass } from "@/components/site/Field";
 
 type InquiryFormProps = {
   defaultProduct?: string;
@@ -67,46 +69,45 @@ export function InquiryForm({ defaultProduct, defaultSize }: InquiryFormProps) {
     }
   };
 
-  const inputClass =
-    "w-full rounded-md border border-charcoal/20 bg-white px-4 py-3 text-sm focus:border-navy focus:outline-none focus:ring-1 focus:ring-navy";
+  const inputClass = controlClass;
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
       <div className="grid gap-5 sm:grid-cols-2">
         <div>
-          <label htmlFor="name" className="mb-1 block text-sm font-medium text-navy">
+          <label htmlFor="name" className="mb-1.5 block text-sm font-medium text-ink">
             Name *
           </label>
           <input id="name" {...register("name")} className={inputClass} />
           {errors.name && (
-            <p className="mt-1 text-xs text-red-600">{errors.name.message}</p>
+            <p className="mt-1.5 text-xs text-red-700" role="alert">{errors.name.message}</p>
           )}
         </div>
 
         <div>
-          <label htmlFor="email" className="mb-1 block text-sm font-medium text-navy">
+          <label htmlFor="email" className="mb-1.5 block text-sm font-medium text-ink">
             Email *
           </label>
           <input id="email" type="email" {...register("email")} className={inputClass} />
           {errors.email && (
-            <p className="mt-1 text-xs text-red-600">{errors.email.message}</p>
+            <p className="mt-1.5 text-xs text-red-700" role="alert">{errors.email.message}</p>
           )}
         </div>
       </div>
 
       <div className="grid gap-5 sm:grid-cols-2">
         <div>
-          <label htmlFor="phone" className="mb-1 block text-sm font-medium text-navy">
+          <label htmlFor="phone" className="mb-1.5 block text-sm font-medium text-ink">
             Phone *
           </label>
           <input id="phone" type="tel" {...register("phone")} className={inputClass} />
           {errors.phone && (
-            <p className="mt-1 text-xs text-red-600">{errors.phone.message}</p>
+            <p className="mt-1.5 text-xs text-red-700" role="alert">{errors.phone.message}</p>
           )}
         </div>
 
         <div>
-          <label htmlFor="country" className="mb-1 block text-sm font-medium text-navy">
+          <label htmlFor="country" className="mb-1.5 block text-sm font-medium text-ink">
             Country *
           </label>
           <select id="country" {...register("country")} className={inputClass}>
@@ -117,14 +118,14 @@ export function InquiryForm({ defaultProduct, defaultSize }: InquiryFormProps) {
             ))}
           </select>
           {errors.country && (
-            <p className="mt-1 text-xs text-red-600">{errors.country.message}</p>
+            <p className="mt-1.5 text-xs text-red-700" role="alert">{errors.country.message}</p>
           )}
         </div>
       </div>
 
       <div className="grid gap-5 sm:grid-cols-3">
         <div>
-          <label htmlFor="product" className="mb-1 block text-sm font-medium text-navy">
+          <label htmlFor="product" className="mb-1.5 block text-sm font-medium text-ink">
             Product
           </label>
           <select id="product" {...register("product")} className={inputClass}>
@@ -138,7 +139,7 @@ export function InquiryForm({ defaultProduct, defaultSize }: InquiryFormProps) {
         </div>
 
         <div>
-          <label htmlFor="size" className="mb-1 block text-sm font-medium text-navy">
+          <label htmlFor="size" className="mb-1.5 block text-sm font-medium text-ink">
             Size
           </label>
           <select id="size" {...register("size")} className={inputClass}>
@@ -152,7 +153,7 @@ export function InquiryForm({ defaultProduct, defaultSize }: InquiryFormProps) {
         </div>
 
         <div>
-          <label htmlFor="quantity" className="mb-1 block text-sm font-medium text-navy">
+          <label htmlFor="quantity" className="mb-1.5 block text-sm font-medium text-ink">
             Quantity
           </label>
           <input
@@ -164,13 +165,13 @@ export function InquiryForm({ defaultProduct, defaultSize }: InquiryFormProps) {
             className={inputClass}
           />
           {errors.quantity && (
-            <p className="mt-1 text-xs text-red-600">{errors.quantity.message}</p>
+            <p className="mt-1.5 text-xs text-red-700" role="alert">{errors.quantity.message}</p>
           )}
         </div>
       </div>
 
       <div>
-        <label htmlFor="message" className="mb-1 block text-sm font-medium text-navy">
+        <label htmlFor="message" className="mb-1.5 block text-sm font-medium text-ink">
           Message *
         </label>
         <textarea
@@ -181,29 +182,25 @@ export function InquiryForm({ defaultProduct, defaultSize }: InquiryFormProps) {
           placeholder="Tell us about your order or inquiry..."
         />
         {errors.message && (
-          <p className="mt-1 text-xs text-red-600">{errors.message.message}</p>
+          <p className="mt-1.5 text-xs text-red-700" role="alert">{errors.message.message}</p>
         )}
       </div>
 
       {status === "success" && (
-        <p className="rounded-md bg-green-50 px-4 py-3 text-sm text-green-800">
+        <p className="rounded-[6px] bg-emerald-50 px-4 py-3 text-sm text-emerald-900" role="status">
           Thank you! Your inquiry has been sent. We will get back to you shortly.
         </p>
       )}
 
       {status === "error" && (
-        <p className="rounded-md bg-red-50 px-4 py-3 text-sm text-red-800">
+        <p className="rounded-[6px] bg-red-50 px-4 py-3 text-sm text-red-800" role="alert">
           {errorMessage}
         </p>
       )}
 
-      <button
-        type="submit"
-        disabled={status === "loading"}
-        className="w-full rounded-full bg-navy px-8 py-3 text-sm uppercase tracking-widest text-white transition-opacity hover:opacity-90 disabled:opacity-50 sm:w-auto"
-      >
-        {status === "loading" ? "Sending..." : "Send Inquiry"}
-      </button>
+      <Button type="submit" size="lg" loading={status === "loading"} className="w-full sm:w-auto">
+        Send message
+      </Button>
     </form>
   );
 }
