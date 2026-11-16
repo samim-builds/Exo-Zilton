@@ -1,38 +1,24 @@
+import { cn } from "@/lib/utils";
+
 type SectionHeadingProps = {
   eyebrow?: string;
   title: string;
   description?: string;
   align?: "left" | "center";
   light?: boolean;
+  as?: "h1" | "h2";
+  className?: string;
 };
 
-export function SectionHeading({
-  eyebrow,
-  title,
-  description,
-  align = "center",
-  light = false,
-}: SectionHeadingProps) {
-  const alignClass = align === "center" ? "text-center mx-auto" : "text-left";
-
+// Section title with an optional short lead-in line and description.
+// Text renders exactly as written: no forced capitals.
+export function SectionHeading({ eyebrow, title, description, align = "left", light = false, as: Tag = "h2", className }: SectionHeadingProps) {
   return (
-    <div className={`max-w-2xl ${alignClass}`}>
-      {eyebrow && (
-        <p
-          className={`mb-2 text-xs uppercase tracking-[0.25em] ${light ? "text-gold" : "text-gold"}`}
-        >
-          {eyebrow}
-        </p>
-      )}
-      <h2
-        className={`font-serif text-3xl font-semibold sm:text-4xl ${light ? "text-white" : "text-navy"}`}
-      >
-        {title}
-      </h2>
+    <div className={cn("max-w-2xl", align === "center" && "mx-auto text-center", className)}>
+      {eyebrow && <p className={cn("mb-3 text-sm font-medium", light ? "text-beech" : "text-bronze")}>{eyebrow}</p>}
+      <Tag className={cn(Tag === "h1" ? "text-4xl sm:text-5xl" : "text-3xl sm:text-4xl", light ? "text-porcelain" : "text-ink")}>{title}</Tag>
       {description && (
-        <p
-          className={`mt-4 text-base leading-relaxed ${light ? "text-white/80" : "text-charcoal/80"}`}
-        >
+        <p className={cn("mt-4 max-w-prose text-base sm:text-lg", align === "center" && "mx-auto", light ? "text-porcelain/75" : "text-stone")}>
           {description}
         </p>
       )}
