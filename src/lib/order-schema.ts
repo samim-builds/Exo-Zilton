@@ -17,7 +17,8 @@ export const orderRequestSchema = checkoutSchema.extend({
   items: z
     .array(
       z.object({
-        slug: z.string().min(1),
+        // Catalog variant key (see CatalogVariant.key).
+        variantId: z.string().min(1).max(100),
         quantity: z.number().int().min(1).max(99),
       }),
     )

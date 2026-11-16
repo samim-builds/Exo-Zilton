@@ -27,6 +27,14 @@ export type LegacyProductRow = {
 
 export const MIGRATED_PRODUCT_SLUG = "mortar-and-pestle";
 
+// Per-size specs now live on each variant (title + diameter/capacity attributes).
+const SIZE_SPEC_KEYS = new Set(["Size", "Diameter", "Capacity"]);
+
+function withoutSizeSpecs(specs: unknown): unknown {
+  if (!specs || typeof specs !== "object") return specs;
+  return Object.fromEntries(Object.entries(specs).filter(([key]) => !SIZE_SPEC_KEYS.has(key)));
+}
+
 export function planCatalogMigration(rows: LegacyProductRow[]) {
   const legacy = [...rows]
     .filter((r) => r.size && r.sku && r.pricePKR !== null && r.priceUSD !== null)
@@ -38,11 +46,12 @@ export function planCatalogMigration(rows: LegacyProductRow[]) {
     product: {
       slug: MIGRATED_PRODUCT_SLUG,
       name: first.name.replace(/\s*-\s*Size\s+\S+$/i, "").trim(),
-      description: first.description,
+      // Shared copy comes from the first row; drop its size so it reads for every variant.
+      description: first.description.replace(`${first.size} `, ""),
       features: first.features,
       careInstructions: first.careInstructions,
       deliveryInfo: first.deliveryInfo,
-      specs: first.specs,
+      specs: withoutSizeSpecs(first.specs),
     },
     optionValues: legacy.map((r, i) => ({ value: r.size!, slug: slugifyOptionValue(r.size!), position: i })),
     variants: legacy.map((r, i) => ({

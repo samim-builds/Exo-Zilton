@@ -30,7 +30,7 @@ export async function FeaturedProducts() {
 
         <div className="mt-12 grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
           {featured.map((product) => (
-            <ProductCard key={product.slug} product={product} />
+            <ProductCard key={product.variantKey} product={product} />
           ))}
         </div>
       </div>

@@ -1,7 +1,58 @@
+// Storefront view types. Client-safe: no server imports.
+
+export type ProductImageView = { url: string; alt: string };
+
+export type CatalogOption = {
+  name: string;
+  /** URL search param for this option, e.g. "size". */
+  param: string;
+  values: { value: string; slug: string }[];
+};
+
+export type CatalogVariant = {
+  /** Cart/order key: the variant id, or a synthetic key for rows without variants. */
+  key: string;
+  id?: string;
+  sku: string;
+  title: string;
+  /** Option param → value slug, e.g. { size: "size-3" }. */
+  selection: Record<string, string>;
+  pricePKR: number;
+  priceUSD: number;
+  compareAtPKR: number | null;
+  compareAtUSD: number | null;
+  inStock: boolean;
+  diameterCm: number;
+  capacityMl: number;
+  images: ProductImageView[];
+  legacySlug: string | null;
+  isDefault: boolean;
+};
+
+export type CatalogProduct = {
+  id?: string;
+  slug: string;
+  name: string;
+  subtitle: string | null;
+  description: string;
+  features: string[];
+  careInstructions: string[];
+  deliveryInfo: string;
+  specs: Record<string, string>;
+  category: { slug: string; name: string } | null;
+  seoTitle?: string | null;
+  seoDescription?: string | null;
+  options: CatalogOption[];
+  variants: CatalogVariant[];
+};
+
+/** One listing card: a single variant of a product. */
 export type Product = {
-  /** Set for database-backed entries; absent in the static fallback. */
   productId?: string;
   variantId?: string;
+  variantKey: string;
+  /** Product page URL with this variant selected. */
+  href: string;
   slug: string;
   name: string;
   sku: string;
@@ -12,11 +63,10 @@ export type Product = {
   priceUSD: number;
   inStock: boolean;
   images: string[];
-  imageAlts?: { url: string; alt: string }[];
+  imageAlts?: ProductImageView[];
   features: string[];
   specs: Record<string, string>;
   description: string;
   careInstructions: string[];
   deliveryInfo: string;
 };
-

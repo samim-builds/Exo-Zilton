@@ -4,13 +4,16 @@ import { useState } from "react";
 import Link from "next/link";
 import { track } from "@vercel/analytics";
 import { useCart } from "@/components/cart/CartProvider";
-import type { Product } from "@/lib/product-types";
+import type { CatalogProduct, CatalogVariant } from "@/lib/product-types";
 import { formatDiameter } from "@/lib/format";
 import { buildWhatsAppUrl } from "@/lib/whatsapp";
 import { InquiryForm } from "@/components/shared/InquiryForm";
 
 type ProductActionsProps = {
-  product: Product;
+  product: CatalogProduct;
+  variant: CatalogVariant;
+  /** Product URL with this variant selected. */
+  href: string;
 };
 
 function WhatsAppMark() {
@@ -27,7 +30,7 @@ function WhatsAppMark() {
   );
 }
 
-export function ProductActions({ product }: ProductActionsProps) {
+export function ProductActions({ product, variant, href }: ProductActionsProps) {
   const [quantity, setQuantity] = useState(1);
   const [showForm, setShowForm] = useState(false);
   const [country, setCountry] = useState("Pakistan");
@@ -37,22 +40,24 @@ export function ProductActions({ product }: ProductActionsProps) {
   function handleAddToCart() {
     addItem(
       {
-        slug: product.slug,
+        key: variant.key,
+        href,
         name: product.name,
-        size: product.size,
-        image: product.images[0],
-        pricePKR: product.pricePKR,
-        priceUSD: product.priceUSD,
+        variantTitle: variant.title,
+        sku: variant.sku,
+        image: variant.images[0]?.url,
+        pricePKR: variant.pricePKR,
+        priceUSD: variant.priceUSD,
       },
       Math.max(1, Math.min(99, quantity || 1)),
     );
     setAdded(true);
-    track("add_to_cart", { product: product.slug, quantity });
+    track("add_to_cart", { product: product.slug, sku: variant.sku, quantity });
   }
 
   const whatsappUrl = buildWhatsAppUrl({
     productName: product.name,
-    size: product.size,
+    size: variant.title,
     quantity,
     country,
   });
@@ -61,16 +66,21 @@ export function ProductActions({ product }: ProductActionsProps) {
     <div className="space-y-6">
       <p
         className={`font-sans text-[10px] uppercase tracking-[0.2em] ${
-          product.inStock ? "text-bronze" : "text-muted"
+          variant.inStock ? "text-bronze" : "text-muted"
         }`}
       >
-        {product.inStock ? "In stock" : "Out of stock"}
+        {variant.inStock ? "In stock" : "Out of stock"}
       </p>
 
       <p className="font-sans text-[12px] tracking-wide text-muted">
-        {formatDiameter(product.diameterCm)} · {product.capacityMl}ml capacity
-        <span className="mx-2 text-hairline">·</span>
-        {product.sku}
+        {variant.diameterCm > 0 && (
+          <>
+            {formatDiameter(variant.diameterCm)}
+            {variant.capacityMl > 0 && ` · ${variant.capacityMl}ml capacity`}
+            <span className="mx-2 text-hairline">·</span>
+          </>
+        )}
+        {variant.sku}
       </p>
 
       <div className="flex items-center gap-4">
@@ -112,7 +122,7 @@ export function ProductActions({ product }: ProductActionsProps) {
       <div className="flex flex-col gap-3">
         <button
           type="button"
-          disabled={!product.inStock}
+          disabled={!variant.inStock}
           onClick={handleAddToCart}
           className="inline-flex w-full items-center justify-center border border-navy bg-navy px-6 py-4 font-sans text-[11px] uppercase tracking-[0.16em] text-white transition-colors hover:border-bronze hover:bg-bronze disabled:cursor-not-allowed disabled:opacity-50"
         >
@@ -150,7 +160,7 @@ export function ProductActions({ product }: ProductActionsProps) {
 
       {showForm && (
         <div className="border border-hairline bg-porcelain p-6">
-          <InquiryForm defaultProduct={product.name} defaultSize={product.size} />
+          <InquiryForm defaultProduct={variant.title ? `${product.name} - ${variant.title}` : product.name} defaultSize={variant.title} />
         </div>
       )}
     </div>

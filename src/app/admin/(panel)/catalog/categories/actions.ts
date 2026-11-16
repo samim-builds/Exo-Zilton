@@ -7,8 +7,9 @@ import { logActivity } from "@/lib/admin/activity";
 import { getCategoryForEdit } from "@/lib/catalog/admin-queries";
 import { saveCategoryGraph } from "@/lib/catalog/mutations";
 import { categoryInputSchema } from "@/lib/catalog/schemas";
+import { CATALOG_TAG } from "@/lib/products-server";
 
-const site = { site: true, paths: ["/admin/catalog/categories"] };
+const site = { site: true, tags: [CATALOG_TAG], paths: ["/admin/catalog/categories"] };
 
 export const loadCategory = adminAction(z.object({ id: z.string().min(1) }), async ({ id }) => {
   const category = await getCategoryForEdit(id);

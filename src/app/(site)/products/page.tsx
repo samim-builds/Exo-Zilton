@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { ProductGrid } from "@/components/products/ProductGrid";
 import { SectionHeading } from "@/components/shared/SectionHeading";
-import { getPublishedProducts } from "@/lib/products";
+import { CategoryChips } from "@/components/products/CategoryChips";
+import { getPublishedProducts, getShopCategories } from "@/lib/products";
 import { buildMetadata } from "@/lib/seo";
 
 export const revalidate = 60;
@@ -19,7 +20,7 @@ export const metadata: Metadata = buildMetadata({
 });
 
 export default async function ProductsPage() {
-  const products = await getPublishedProducts();
+  const [products, categories] = await Promise.all([getPublishedProducts(), getShopCategories()]);
 
   return (
     <div className="py-12 sm:py-16">
@@ -30,6 +31,12 @@ export default async function ProductsPage() {
           title="Mortar & Pestle Collection"
           description="Designed to maximise flavour blends, the must-have mortar and pestle remains a staple in any home kitchen. Made with dense unglazed porcelain for the perfect abrasive finish."
         />
+
+        {categories.length > 0 && (
+          <div className="mt-8">
+            <CategoryChips categories={categories} />
+          </div>
+        )}
 
         <div className="mt-12">
           <ProductGrid products={products} />

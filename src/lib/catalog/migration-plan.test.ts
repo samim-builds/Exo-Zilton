@@ -34,6 +34,17 @@ describe("planCatalogMigration", () => {
     expect(plan.product.description).toBe("Description 0");
   });
 
+  it("strips the first row size from shared copy and specs", () => {
+    const sized = planCatalogMigration([
+      row(0, {
+        description: "Meet the Exo Zilton Size 0 Mortar & Pestle.",
+        specs: { Size: "Size 0", Diameter: "10cm", Capacity: "140ml", Material: "Porcelain" },
+      }),
+    ])!;
+    expect(sized.product.description).toBe("Meet the Exo Zilton Mortar & Pestle.");
+    expect(sized.product.specs).toEqual({ Material: "Porcelain" });
+  });
+
   it("creates one Size option value per row in sort order", () => {
     expect(plan.optionValues).toEqual([
       { value: "Size 0", slug: "size-0", position: 0 },

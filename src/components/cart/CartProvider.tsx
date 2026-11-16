@@ -1,37 +1,27 @@
 "use client";
 
 import { createContext, useCallback, useContext, useMemo, useSyncExternalStore } from "react";
+import { CART_STORAGE_KEY, clampQuantity, parseStoredCart, type CartItem } from "@/lib/cart";
 
-export type CartItem = {
-  slug: string;
-  name: string;
-  size: string;
-  image?: string;
-  pricePKR: number;
-  priceUSD: number;
-  quantity: number;
-};
+export type { CartItem };
 
 type CartContextValue = {
   items: CartItem[];
   count: number;
   ready: boolean;
   addItem: (item: Omit<CartItem, "quantity">, quantity: number) => void;
-  setQuantity: (slug: string, quantity: number) => void;
-  removeItem: (slug: string) => void;
+  setQuantity: (key: string, quantity: number) => void;
+  removeItem: (key: string) => void;
   clear: () => void;
 };
 
-const STORAGE_KEY = "exo_zilton_cart";
-const MAX_QTY = 99;
+const STORAGE_KEY = CART_STORAGE_KEY;
 
 const CartContext = createContext<CartContextValue | null>(null);
 
 function readStoredCart(): CartItem[] {
   try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    const parsed = raw ? JSON.parse(raw) : [];
-    return Array.isArray(parsed) ? parsed : [];
+    return parseStoredCart(window.localStorage.getItem(STORAGE_KEY));
   } catch {
     return [];
   }
@@ -87,26 +77,20 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const addItem = useCallback<CartContextValue["addItem"]>((item, quantity) => {
     setItems((current) => {
-      const existing = current.find((i) => i.slug === item.slug);
+      const existing = current.find((i) => i.key === item.key);
       if (existing) {
-        return current.map((i) =>
-          i.slug === item.slug ? { ...i, ...item, quantity: Math.min(MAX_QTY, i.quantity + quantity) } : i,
-        );
+        return current.map((i) => (i.key === item.key ? { ...i, ...item, quantity: clampQuantity(i.quantity + quantity) } : i));
       }
-      return [...current, { ...item, quantity: Math.min(MAX_QTY, quantity) }];
+      return [...current, { ...item, quantity: clampQuantity(quantity) }];
     });
   }, []);
 
-  const setQuantity = useCallback((slug: string, quantity: number) => {
-    setItems((current) =>
-      current.map((i) =>
-        i.slug === slug ? { ...i, quantity: Math.max(1, Math.min(MAX_QTY, quantity)) } : i,
-      ),
-    );
+  const setQuantity = useCallback((key: string, quantity: number) => {
+    setItems((current) => current.map((i) => (i.key === key ? { ...i, quantity: clampQuantity(quantity) } : i)));
   }, []);
 
-  const removeItem = useCallback((slug: string) => {
-    setItems((current) => current.filter((i) => i.slug !== slug));
+  const removeItem = useCallback((key: string) => {
+    setItems((current) => current.filter((i) => i.key !== key));
   }, []);
 
   const clear = useCallback(() => setItems(() => []), []);

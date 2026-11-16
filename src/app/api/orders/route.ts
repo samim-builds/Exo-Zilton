@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { queryStorefrontProducts } from "@/lib/catalog/queries";
+import { queryCatalog } from "@/lib/catalog/queries";
+import { priceOrderLines } from "@/lib/catalog/order-pricing";
 import { isDomestic, orderRequestSchema } from "@/lib/order-schema";
 import { sendOrderEmails } from "@/lib/order-emails";
 
@@ -18,39 +19,18 @@ export async function POST(request: Request) {
   }
   const data = parsed.data;
 
-  // Merge duplicate lines and price everything server-side from the database.
-  const quantities = new Map<string, number>();
-  for (const item of data.items) {
-    quantities.set(item.slug, Math.min(99, (quantities.get(item.slug) ?? 0) + item.quantity));
-  }
-
   try {
-    // Cart lines carry storefront slugs (one per variant); price them from the catalog.
-    const catalog = await queryStorefrontProducts();
-    const products = catalog.filter((p) => quantities.has(p.slug));
-
-    const unavailable = [...quantities.keys()].filter(
-      (slug) => !products.some((p) => p.slug === slug && p.inStock),
-    );
-    if (unavailable.length > 0) {
+    // Price every line server-side from the live (uncached) catalog.
+    const domestic = isDomestic(data.country);
+    const currency = domestic ? "PKR" : "USD";
+    const priced = priceOrderLines(await queryCatalog(), data.items, currency);
+    if (!priced.ok) {
       return NextResponse.json(
         { error: "Some items in your cart are no longer available. Please review your cart." },
         { status: 409 },
       );
     }
-
-    const domestic = isDomestic(data.country);
-    const currency = domestic ? "PKR" : "USD";
-    const items = products.map((p) => ({
-      productId: p.productId ?? null,
-      variantId: p.variantId ?? null,
-      productName: p.name,
-      sku: p.sku,
-      size: p.size,
-      unitPrice: domestic ? p.pricePKR : p.priceUSD,
-      quantity: quantities.get(p.slug)!,
-    }));
-    const subtotal = items.reduce((sum, i) => sum + i.unitPrice * i.quantity, 0);
+    const { items, subtotal } = priced;
 
     const customer = await prisma.customer.upsert({
       where: { email: data.email.toLowerCase() },

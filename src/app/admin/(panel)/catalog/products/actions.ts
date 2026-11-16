@@ -6,8 +6,9 @@ import { adminAction, AdminActionError } from "@/lib/admin/action";
 import { logActivity } from "@/lib/admin/activity";
 import { saveProductGraph } from "@/lib/catalog/mutations";
 import { productInputSchema } from "@/lib/catalog/schemas";
+import { CATALOG_TAG } from "@/lib/products-server";
 
-const site = { site: true, paths: ["/admin/catalog/products"] };
+const site = { site: true, tags: [CATALOG_TAG], paths: ["/admin/catalog/products"] };
 
 export const saveProduct = adminAction(
   productInputSchema,

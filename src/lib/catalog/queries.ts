@@ -1,11 +1,13 @@
 import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/db";
-import type { Product } from "@/lib/product-types";
-import { toStorefrontProducts, type CatalogProductInput } from "./storefront";
+import type { CatalogProduct } from "@/lib/product-types";
+import { toCatalogProducts, type CatalogProductInput } from "./storefront";
 
 const catalogInclude = {
   images: true,
-  variants: { include: { optionValues: { include: { optionValue: true } } } },
+  category: { select: { slug: true, name: true } },
+  options: { include: { values: true } },
+  variants: { include: { optionValues: { select: { optionValueId: true } } } },
 } satisfies Prisma.ProductInclude;
 
 type CatalogRow = Prisma.ProductGetPayload<{ include: typeof catalogInclude }>;
@@ -13,6 +15,7 @@ type CatalogRow = Prisma.ProductGetPayload<{ include: typeof catalogInclude }>;
 function toInput(row: CatalogRow): CatalogProductInput {
   return {
     ...row,
+    variants: row.variants.map((v) => ({ ...v, optionValueIds: v.optionValues.map((o) => o.optionValueId) })),
     legacy: {
       sku: row.sku,
       size: row.size,
@@ -26,10 +29,10 @@ function toInput(row: CatalogRow): CatalogProductInput {
 }
 
 /**
- * Active storefront products, flattened to one entry per variant. Rows that
+ * Active storefront products with their options and variants. Rows that
  * predate variants are included only while their legacy `published` flag is set.
  */
-export async function queryStorefrontProducts(): Promise<Product[]> {
+export async function queryCatalog(): Promise<CatalogProduct[]> {
   const rows = await prisma.product.findMany({
     where: {
       status: "ACTIVE",
@@ -37,7 +40,35 @@ export async function queryStorefrontProducts(): Promise<Product[]> {
       OR: [{ variants: { some: { active: true } } }, { published: true }],
     },
     include: catalogInclude,
-    orderBy: [{ sortOrder: "asc" }, { diameterCm: "asc" }, { createdAt: "asc" }],
+    orderBy: [{ featured: "desc" }, { sortOrder: "asc" }, { diameterCm: "asc" }, { createdAt: "asc" }],
   });
-  return toStorefrontProducts(rows.map(toInput));
+  return toCatalogProducts(rows.map(toInput));
+}
+
+export type StorefrontCategory = {
+  id: string;
+  slug: string;
+  name: string;
+  description: string | null;
+  imageUrl: string | null;
+  parentId: string | null;
+  seoTitle: string | null;
+  seoDescription: string | null;
+};
+
+export async function queryCategories(): Promise<StorefrontCategory[]> {
+  return prisma.category.findMany({
+    where: { published: true },
+    orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
+    select: {
+      id: true,
+      slug: true,
+      name: true,
+      description: true,
+      imageUrl: true,
+      parentId: true,
+      seoTitle: true,
+      seoDescription: true,
+    },
+  });
 }

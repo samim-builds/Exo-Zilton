@@ -68,7 +68,7 @@ export function ProductGrid({ products }: ProductGridProps) {
 
       <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
         {filtered.map((product) => (
-          <ProductCard key={product.slug} product={product} />
+          <ProductCard key={product.variantKey} product={product} />
         ))}
       </div>
 

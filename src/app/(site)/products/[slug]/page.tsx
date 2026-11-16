@@ -1,67 +1,71 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import Link from "next/link";
 import { ProductGallery } from "@/components/products/ProductGallery";
-import { SizeSelector } from "@/components/products/SizeSelector";
+import { VariantSelector } from "@/components/products/VariantSelector";
 import { ProductActions } from "@/components/products/ProductActions";
 import { ProductAccordion } from "@/components/products/ProductAccordion";
 import { BrandBanner } from "@/components/home/BrandBanner";
-import {
-  getProductBySlug,
-  getAllProductSlugs,
-  getPublishedProducts,
-} from "@/lib/products";
-import { buildMetadata, productJsonLd, breadcrumbJsonLd, faqJsonLd } from "@/lib/seo";
+import { lookupProduct, type CatalogProduct, type CatalogVariant } from "@/lib/products";
+import { resolveVariant, variantHref } from "@/lib/catalog/storefront";
+import { buildMetadata, productGroupJsonLd, breadcrumbJsonLd, faqJsonLd } from "@/lib/seo";
 import { formatDiameter, formatPKR, formatUSD } from "@/lib/format";
-
-export const revalidate = 60;
 
 type PageProps = {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
-export async function generateStaticParams() {
-  const slugs = await getAllProductSlugs();
-  return slugs.map((slug) => ({ slug }));
+// Product-wide specs plus the selected variant's size and dimensions.
+function variantSpecs(product: CatalogProduct, variant: CatalogVariant): Record<string, string> {
+  // Variant values win: migrated products carry the first size's Size/Diameter/Capacity in specs.
+  return {
+    ...product.specs,
+    ...Object.fromEntries(
+      product.options.map((o) => [o.name, o.values.find((v) => v.slug === variant.selection[o.param])?.value ?? ""]),
+    ),
+    ...(variant.diameterCm > 0 && { Diameter: `${variant.diameterCm}cm` }),
+    ...(variant.capacityMl > 0 && { Capacity: `${variant.capacityMl}ml` }),
+  };
 }
 
-export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const { slug } = await params;
-  const product = await getProductBySlug(slug);
+async function resolvePage({ params, searchParams }: PageProps) {
+  const [{ slug }, query] = await Promise.all([params, searchParams]);
+  const found = await lookupProduct(slug);
+  if (!found) notFound();
+  // Old per-size URLs (/products/mortar-and-pestle-size-3) moved to the product page with that size selected.
+  if (found.kind === "legacy") permanentRedirect(variantHref(found.product, found.variant));
+  const product = found.product;
+  const variant = resolveVariant(product, query);
+  return { product, variant, href: variantHref(product, variant) };
+}
 
-  if (!product) {
-    return { title: "Product Not Found" };
-  }
+export async function generateMetadata(props: PageProps): Promise<Metadata> {
+  const { product, variant, href } = await resolvePage(props);
+  const title = product.options.length > 0 && variant.title ? `${product.name} - ${variant.title}` : product.name;
 
   return buildMetadata({
-    title: product.name,
-    description: product.description,
-    path: `/products/${product.slug}`,
-    image: product.images[0],
+    title: product.seoTitle || title,
+    description: product.seoDescription || product.description,
+    path: href,
+    image: variant.images[0]?.url,
     keywords: [
       "porcelain mortar and pestle",
-      product.size,
-      `${product.diameterCm}cm mortar pestle`,
+      variant.title,
+      ...(variant.diameterCm > 0 ? [`${variant.diameterCm}cm mortar pestle`] : []),
       "Exo Zilton",
-    ],
+    ].filter(Boolean),
   });
 }
 
-export default async function ProductPage({ params }: PageProps) {
-  const { slug } = await params;
-  const [product, allProducts] = await Promise.all([
-    getProductBySlug(slug),
-    getPublishedProducts(),
-  ]);
+export default async function ProductPage(props: PageProps) {
+  const { product, variant, href } = await resolvePage(props);
 
-  if (!product) {
-    notFound();
-  }
-
-  const productLd = productJsonLd(product);
+  const productLd = productGroupJsonLd(product);
   const breadcrumbLd = breadcrumbJsonLd([
     { name: "Home", path: "/" },
     { name: "Products", path: "/products" },
+    ...(product.category ? [{ name: product.category.name, path: `/categories/${product.category.slug}` }] : []),
     { name: product.name, path: `/products/${product.slug}` },
   ]);
 
@@ -109,11 +113,19 @@ export default async function ProductPage({ params }: PageProps) {
               Products
             </Link>
             <span className="mx-2 text-hairline">/</span>
+            {product.category && (
+              <>
+                <Link href={`/categories/${product.category.slug}`} className="hover:text-navy">
+                  {product.category.name}
+                </Link>
+                <span className="mx-2 text-hairline">/</span>
+              </>
+            )}
             <span className="text-navy">{product.name}</span>
           </nav>
 
           <div className="grid grid-cols-1 items-start gap-12 lg:grid-cols-[minmax(0,61.8fr)_minmax(0,38.2fr)] lg:gap-16">
-            <ProductGallery images={product.images} productName={product.name} />
+            <ProductGallery key={variant.key} images={variant.images.map((img) => img.url)} productName={product.name} />
 
             <div className="lg:sticky lg:top-24 lg:self-start">
               <p className="font-sans text-[10px] uppercase tracking-[0.22em] text-bronze">
@@ -123,17 +135,25 @@ export default async function ProductPage({ params }: PageProps) {
                 {product.name}
               </h1>
               <p className="mt-6 font-sans text-[15px] tracking-wide text-navy">
-                {formatPKR(product.pricePKR)}
+                {variant.compareAtPKR && variant.compareAtPKR > variant.pricePKR && (
+                  <s className="mr-3 text-muted">{formatPKR(variant.compareAtPKR)}</s>
+                )}
+                {formatPKR(variant.pricePKR)}
                 <span className="mx-3 text-hairline" aria-hidden="true">
                   |
                 </span>
-                <span className="text-muted">{formatUSD(product.priceUSD)} USD</span>
+                <span className="text-muted">{formatUSD(variant.priceUSD)} USD</span>
               </p>
+              {product.subtitle && (
+                <p className="mt-3 font-sans text-[14px] text-muted">{product.subtitle}</p>
+              )}
+              {product.options.length > 0 && (
+                <div className="mt-8">
+                  <VariantSelector product={product} current={variant} />
+                </div>
+              )}
               <div className="mt-8">
-                <SizeSelector products={allProducts} currentSlug={product.slug} />
-              </div>
-              <div className="mt-8">
-                <ProductActions product={product} />
+                <ProductActions key={variant.key} product={product} variant={variant} href={href} />
               </div>
             </div>
           </div>
@@ -161,7 +181,7 @@ export default async function ProductPage({ params }: PageProps) {
                   content: (
                     <table className="w-full text-left">
                       <tbody>
-                        {Object.entries(product.specs).map(([key, value]) => (
+                        {Object.entries(variantSpecs(product, variant)).map(([key, value]) => (
                           <tr key={key} className="border-b border-hairline">
                             <th className="py-2 pr-4 font-medium text-navy">{key}</th>
                             <td className="py-2">{value}</td>
@@ -191,9 +211,11 @@ export default async function ProductPage({ params }: PageProps) {
             />
           </div>
 
-          <p className="mt-8 text-center font-sans text-[12px] tracking-wide text-muted">
-            {product.size} — {formatDiameter(product.diameterCm)}
-          </p>
+          {variant.diameterCm > 0 && (
+            <p className="mt-8 text-center font-sans text-[12px] tracking-wide text-muted">
+              {variant.title} — {formatDiameter(variant.diameterCm)}
+            </p>
+          )}
         </div>
       </div>
 

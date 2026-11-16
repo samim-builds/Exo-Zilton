@@ -32,7 +32,7 @@ export function CartView() {
     <div className="grid gap-10 lg:grid-cols-[1.618fr_1fr]">
       <ul className="divide-y divide-hairline border-y border-hairline">
         {items.map((item) => (
-          <li key={item.slug} className="flex gap-5 py-6">
+          <li key={item.key} className="flex gap-5 py-6">
             <div className="relative h-24 w-24 shrink-0 border border-hairline bg-porcelain">
               {item.image && (
                 <Image src={item.image} alt="" fill sizes="96px" className="object-contain p-2" />
@@ -40,28 +40,28 @@ export function CartView() {
             </div>
             <div className="flex flex-1 flex-col justify-between gap-3 sm:flex-row sm:items-start">
               <div>
-                <Link href={`/products/${item.slug}`} className="font-serif text-xl text-navy hover:text-bronze">
+                <Link href={item.href} className="font-serif text-xl text-navy hover:text-bronze">
                   {item.name}
                 </Link>
-                <p className="mt-1 font-sans text-[11px] uppercase tracking-[0.16em] text-muted">{item.size}</p>
+                <p className="mt-1 font-sans text-[11px] uppercase tracking-[0.16em] text-muted">{item.variantTitle}</p>
                 <p className="mt-2 font-sans text-[15px] text-charcoal">{formatPKR(item.pricePKR)}</p>
               </div>
               <div className="flex items-center gap-4">
-                <label className="sr-only" htmlFor={`qty-${item.slug}`}>
+                <label className="sr-only" htmlFor={`qty-${item.key}`}>
                   Quantity
                 </label>
                 <input
-                  id={`qty-${item.slug}`}
+                  id={`qty-${item.key}`}
                   type="number"
                   min={1}
                   max={99}
                   value={item.quantity}
-                  onChange={(e) => setQuantity(item.slug, Number(e.target.value) || 1)}
+                  onChange={(e) => setQuantity(item.key, Number(e.target.value) || 1)}
                   className="w-20 border border-hairline bg-porcelain px-3 py-2 font-sans text-sm text-navy"
                 />
                 <button
                   type="button"
-                  onClick={() => removeItem(item.slug)}
+                  onClick={() => removeItem(item.key)}
                   className="font-sans text-[11px] uppercase tracking-[0.16em] text-muted underline underline-offset-4 hover:text-navy"
                 >
                   Remove

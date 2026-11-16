@@ -1,9 +1,8 @@
-import type { Product } from "@/lib/product-types";
+import type { CatalogProduct, CatalogVariant, Product, ProductImageView } from "@/lib/product-types";
 import { slugifyOptionValue } from "./variants";
 
-// Maps catalog products (product → variants) onto the storefront's per-size
-// `Product` view, one entry per active variant. The storefront pages still
-// work per size until the variant selector lands.
+// Maps catalog rows (product → options → variants) onto the storefront view:
+// one product page per product, variants chosen via URL params (?size=size-3).
 
 type ImageInput = { url: string; alt: string; sortOrder: number; variantId: string | null };
 
@@ -13,12 +12,22 @@ export type VariantInput = {
   title: string;
   pricePKR: number;
   priceUSD: number;
+  compareAtPKR: number | null;
+  compareAtUSD: number | null;
   trackInventory: boolean;
   stockQty: number;
   attributes: unknown;
   legacySlug: string | null;
   position: number;
   active: boolean;
+  isDefault: boolean;
+  optionValueIds: string[];
+};
+
+export type OptionInput = {
+  name: string;
+  position: number;
+  values: { id: string; value: string; slug: string; position: number }[];
 };
 
 // Values from the pre-variant columns, for rows the data migration hasn't converted yet.
@@ -36,81 +45,221 @@ export type CatalogProductInput = {
   id: string;
   slug: string;
   name: string;
+  subtitle: string | null;
   description: string;
   features: string[];
   careInstructions: string[];
   deliveryInfo: string;
   specs: unknown;
+  category: { slug: string; name: string } | null;
+  seoTitle?: string | null;
+  seoDescription?: string | null;
+  options: OptionInput[];
   images: ImageInput[];
   variants: VariantInput[];
   legacy: LegacyColumns | null;
 };
+
+type SearchParams = Record<string, string | string[] | undefined>;
 
 function numberAttr(attributes: unknown, key: string): number {
   const value = (attributes as Record<string, unknown> | null)?.[key];
   return typeof value === "number" ? value : Number(value) || 0;
 }
 
-function sortImages(images: ImageInput[]) {
-  return [...images].sort((a, b) => a.sortOrder - b.sortOrder);
+function sortedImages(images: ImageInput[]): ProductImageView[] {
+  return [...images].sort((a, b) => a.sortOrder - b.sortOrder).map(({ url, alt }) => ({ url, alt }));
 }
 
-export function toStorefrontProducts(products: CatalogProductInput[]): Product[] {
-  return products.flatMap((product): Product[] => {
-    const productImages = sortImages(product.images.filter((img) => !img.variantId));
-    const shared = {
-      description: product.description,
-      features: product.features,
-      careInstructions: product.careInstructions,
-      deliveryInfo: product.deliveryInfo,
-      specs: (product.specs ?? {}) as Record<string, string>,
-    };
+const byPosition = <T extends { position: number }>(a: T, b: T) => a.position - b.position;
 
-    if (product.variants.length === 0) {
-      const legacy = product.legacy;
-      if (!legacy || legacy.pricePKR === null || legacy.priceUSD === null) return [];
-      return [
+function toCatalogProduct(input: CatalogProductInput): CatalogProduct | null {
+  const productImages = sortedImages(input.images.filter((img) => !img.variantId));
+  const shared = {
+    id: input.id,
+    slug: input.slug,
+    name: input.name,
+    subtitle: input.subtitle,
+    description: input.description,
+    features: input.features,
+    careInstructions: input.careInstructions,
+    deliveryInfo: input.deliveryInfo,
+    specs: (input.specs ?? {}) as Record<string, string>,
+    category: input.category,
+    seoTitle: input.seoTitle ?? null,
+    seoDescription: input.seoDescription ?? null,
+  };
+
+  if (input.variants.length === 0) {
+    const legacy = input.legacy;
+    if (!legacy || legacy.pricePKR === null || legacy.priceUSD === null) return null;
+    return {
+      ...shared,
+      options: [],
+      variants: [
         {
-          ...shared,
-          productId: product.id,
-          variantId: undefined,
-          slug: product.slug,
-          name: product.name,
-          sku: legacy.sku ?? product.slug,
-          size: legacy.size ?? "",
-          diameterCm: legacy.diameterCm ?? 0,
-          capacityMl: legacy.capacityMl ?? 0,
+          key: `legacy:${input.id}`,
+          id: undefined,
+          sku: legacy.sku ?? input.slug,
+          title: legacy.size ?? "",
+          selection: {},
           pricePKR: legacy.pricePKR,
           priceUSD: legacy.priceUSD,
+          compareAtPKR: null,
+          compareAtUSD: null,
           inStock: legacy.inStock,
-          images: productImages.map((img) => img.url),
-          imageAlts: productImages.map(({ url, alt }) => ({ url, alt })),
+          diameterCm: legacy.diameterCm ?? 0,
+          capacityMl: legacy.capacityMl ?? 0,
+          images: productImages,
+          legacySlug: null,
+          isDefault: true,
         },
-      ];
-    }
+      ],
+    };
+  }
 
-    return [...product.variants]
-      .filter((v) => v.active)
-      .sort((a, b) => a.position - b.position)
-      .map((variant) => {
-        const own = sortImages(product.images.filter((img) => img.variantId === variant.id));
-        const images = own.length > 0 ? own : productImages;
-        return {
-          ...shared,
-          productId: product.id,
-          variantId: variant.id,
-          slug: variant.legacySlug ?? `${product.slug}-${slugifyOptionValue(variant.title)}`,
-          name: `${product.name} - ${variant.title}`,
-          sku: variant.sku,
-          size: variant.title,
-          diameterCm: numberAttr(variant.attributes, "diameterCm"),
-          capacityMl: numberAttr(variant.attributes, "capacityMl"),
-          pricePKR: variant.pricePKR,
-          priceUSD: variant.priceUSD,
-          inStock: !variant.trackInventory || variant.stockQty > 0,
-          images: images.map((img) => img.url),
-          imageAlts: images.map(({ url, alt }) => ({ url, alt })),
-        };
-      });
-  });
+  const options = [...input.options].sort(byPosition).map((o) => ({
+    name: o.name,
+    param: slugifyOptionValue(o.name),
+    values: [...o.values].sort(byPosition),
+  }));
+  // optionValueId → [param, value slug]
+  const valueIndex = new Map(options.flatMap((o) => o.values.map((v) => [v.id, [o.param, v.slug]] as const)));
+
+  const variants = [...input.variants]
+    .filter((v) => v.active)
+    .sort(byPosition)
+    .map((v): CatalogVariant => {
+      const own = sortedImages(input.images.filter((img) => img.variantId === v.id));
+      return {
+        key: v.id,
+        id: v.id,
+        sku: v.sku,
+        title: v.title,
+        selection: Object.fromEntries(v.optionValueIds.flatMap((id) => (valueIndex.has(id) ? [valueIndex.get(id)!] : []))),
+        pricePKR: v.pricePKR,
+        priceUSD: v.priceUSD,
+        compareAtPKR: v.compareAtPKR,
+        compareAtUSD: v.compareAtUSD,
+        inStock: !v.trackInventory || v.stockQty > 0,
+        diameterCm: numberAttr(v.attributes, "diameterCm"),
+        capacityMl: numberAttr(v.attributes, "capacityMl"),
+        images: own.length > 0 ? own : productImages,
+        legacySlug: v.legacySlug,
+        isDefault: v.isDefault,
+      };
+    });
+  if (variants.length === 0) return null;
+
+  return {
+    ...shared,
+    options: options.map((o) => ({ name: o.name, param: o.param, values: o.values.map(({ value, slug }) => ({ value, slug })) })),
+    variants,
+  };
+}
+
+export function toCatalogProducts(inputs: CatalogProductInput[]): CatalogProduct[] {
+  return inputs.flatMap((input) => toCatalogProduct(input) ?? []);
+}
+
+function defaultVariant(product: CatalogProduct): CatalogVariant {
+  return product.variants.find((v) => v.isDefault) ?? product.variants[0];
+}
+
+function firstParam(value: string | string[] | undefined): string | undefined {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+/** The variant named by the URL params; unspecified options come from the default variant. */
+export function resolveVariant(product: CatalogProduct, params: SearchParams): CatalogVariant {
+  const fallback = defaultVariant(product);
+  const wanted: Record<string, string> = {};
+  for (const option of product.options) {
+    const requested = firstParam(params[option.param]);
+    const valid = requested && option.values.some((v) => v.slug === requested);
+    const value = valid ? requested : fallback.selection[option.param];
+    if (value) wanted[option.param] = value;
+  }
+  const matches = (v: CatalogVariant) => Object.entries(wanted).every(([param, slug]) => v.selection[param] === slug);
+  return product.variants.find(matches) ?? fallback;
+}
+
+export function variantHref(product: CatalogProduct, variant: CatalogVariant): string {
+  const query = new URLSearchParams(
+    product.options.flatMap((o) => (variant.selection[o.param] ? [[o.param, variant.selection[o.param]]] : [])),
+  ).toString();
+  return `/products/${product.slug}${query ? `?${query}` : ""}`;
+}
+
+/**
+ * Where choosing `valueSlug` for `param` leads from `current`: the same
+ * combination with that option swapped, else any variant offering that value.
+ */
+export function selectionHref(
+  product: CatalogProduct,
+  current: CatalogVariant,
+  param: string,
+  valueSlug: string,
+): { href: string | null; available: boolean } {
+  const target = { ...current.selection, [param]: valueSlug };
+  const exact = product.variants.find((v) => Object.entries(target).every(([p, s]) => v.selection[p] === s));
+  const match = exact ?? product.variants.find((v) => v.selection[param] === valueSlug);
+  return match ? { href: variantHref(product, match), available: true } : { href: null, available: false };
+}
+
+export function findByLegacySlug(
+  products: CatalogProduct[],
+  slug: string,
+): { product: CatalogProduct; variant: CatalogVariant } | undefined {
+  for (const product of products) {
+    const variant = product.variants.find((v) => v.legacySlug === slug);
+    if (variant) return { product, variant };
+  }
+  return undefined;
+}
+
+/** One listing card per variant, linking to the product page with it selected. */
+export function flattenCatalog(products: CatalogProduct[]): Product[] {
+  return products.flatMap((product) =>
+    product.variants.map((variant) => ({
+      productId: product.id,
+      variantId: variant.id,
+      variantKey: variant.key,
+      href: variantHref(product, variant),
+      slug: product.slug,
+      name: product.options.length > 0 && variant.title ? `${product.name} - ${variant.title}` : product.name,
+      sku: variant.sku,
+      size: variant.title,
+      diameterCm: variant.diameterCm,
+      capacityMl: variant.capacityMl,
+      pricePKR: variant.pricePKR,
+      priceUSD: variant.priceUSD,
+      inStock: variant.inStock,
+      images: variant.images.map((img) => img.url),
+      imageAlts: variant.images,
+      features: product.features,
+      specs: product.specs,
+      description: product.description,
+      careInstructions: product.careInstructions,
+      deliveryInfo: product.deliveryInfo,
+    })),
+  );
+}
+
+/** Slugs of a category and every category below it (cycle-safe). */
+export function categorySubtree(
+  categories: { id: string; slug: string; parentId: string | null }[],
+  slug: string,
+): Set<string> {
+  const root = categories.find((c) => c.slug === slug);
+  const found = new Set<string>();
+  if (!root) return found;
+  const queue = [root];
+  while (queue.length > 0) {
+    const current = queue.shift()!;
+    if (found.has(current.slug)) continue;
+    found.add(current.slug);
+    queue.push(...categories.filter((c) => c.parentId === current.id));
+  }
+  return found;
 }

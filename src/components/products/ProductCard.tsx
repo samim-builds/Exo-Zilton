@@ -15,14 +15,14 @@ export function ProductCard({ product }: ProductCardProps) {
   return (
     <article className="border border-hairline bg-porcelain">
       <Link
-        href={`/products/${product.slug}`}
+        href={product.href}
         className="group block focus-visible:outline focus-visible:outline-offset-[3px] focus-visible:outline-bronze"
       >
         <div className="relative aspect-[4/5] overflow-hidden bg-porcelain">
           {primary && (
             <Image
               src={primary}
-              alt={`${product.name} — ${formatDiameter(product.diameterCm)} porcelain mortar and pestle`}
+              alt={product.imageAlts?.[0]?.alt || product.name}
               fill
               className={`object-contain p-8 transition-opacity duration-500 motion-reduce:transition-none sm:p-10 ${
                 showHover ? "group-hover:opacity-0" : ""
@@ -49,9 +49,12 @@ export function ProductCard({ product }: ProductCardProps) {
           <h3 className="font-serif text-xl font-light tracking-tight text-navy">
             {product.name}
           </h3>
-          <p className="mt-2 font-sans text-[12px] tracking-wide text-muted">
-            {formatDiameter(product.diameterCm)} · {product.capacityMl}ml
-          </p>
+          {product.diameterCm > 0 && (
+            <p className="mt-2 font-sans text-[12px] tracking-wide text-muted">
+              {formatDiameter(product.diameterCm)}
+              {product.capacityMl > 0 && ` · ${product.capacityMl}ml`}
+            </p>
+          )}
           <p className="mt-2 font-sans text-[12px] tracking-wide text-navy">
             {formatPKR(product.pricePKR)}
             <span className="mx-2 text-hairline" aria-hidden="true">

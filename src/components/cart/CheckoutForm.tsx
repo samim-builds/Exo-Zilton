@@ -62,7 +62,7 @@ export function CheckoutForm() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...data,
-          items: items.map((i) => ({ slug: i.slug, quantity: i.quantity })),
+          items: items.map((i) => ({ variantId: i.key, quantity: i.quantity })),
         }),
       });
       const body = await response.json();
@@ -135,8 +135,11 @@ export function CheckoutForm() {
         <p className="font-sans text-[11px] uppercase tracking-[0.2em] text-bronze">Your order</p>
         <ul className="mt-4 space-y-3">
           {items.map((i) => (
-            <li key={i.slug} className="flex justify-between gap-4 font-sans text-[14px] text-charcoal">
-              <span>{i.quantity} × {i.name}</span>
+            <li key={i.key} className="flex justify-between gap-4 font-sans text-[14px] text-charcoal">
+              <span>
+                {i.quantity} × {i.name}
+                {i.variantTitle && ` — ${i.variantTitle}`}
+              </span>
               <span className="shrink-0">
                 {formatMoney((domestic ? i.pricePKR : i.priceUSD) * i.quantity, currency)}
               </span>

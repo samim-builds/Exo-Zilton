@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { siteConfig, getInstagramUrl } from "./site";
-import type { Product } from "./products";
+import type { CatalogProduct } from "./product-types";
+import { variantHref } from "./catalog/storefront";
 
 export function buildMetadata({
   title,
@@ -54,31 +55,45 @@ export function organizationJsonLd() {
   };
 }
 
-export function productJsonLd(product: Product) {
+// schema.org properties a variant option maps onto; other options are listed by name.
+const VARIES_BY: Record<string, string> = { size: "size", colour: "color", color: "color", material: "material" };
+
+function absoluteUrl(url: string): string {
+  return /^https?:\/\//.test(url) ? url : `${siteConfig.url}${url}`;
+}
+
+export function productGroupJsonLd(product: CatalogProduct) {
+  const brand = { "@type": "Brand", name: siteConfig.name };
   return {
     "@context": "https://schema.org",
-    "@type": "Product",
+    "@type": "ProductGroup",
     name: product.name,
     description: product.description,
-    sku: product.sku,
-    brand: {
-      "@type": "Brand",
-      name: siteConfig.name,
-    },
-    image: product.images.map((img) => `${siteConfig.url}${img}`),
-    offers: {
-      "@type": "Offer",
-      url: `${siteConfig.url}/products/${product.slug}`,
-      priceCurrency: "PKR",
-      price: product.pricePKR,
-      availability: product.inStock
-        ? "https://schema.org/InStock"
-        : "https://schema.org/OutOfStock",
-      seller: {
-        "@type": "Organization",
-        name: siteConfig.name,
+    productGroupID: product.slug,
+    url: `${siteConfig.url}/products/${product.slug}`,
+    brand,
+    variesBy: product.options.map((o) => (VARIES_BY[o.param] ? `https://schema.org/${VARIES_BY[o.param]}` : o.name)),
+    hasVariant: product.variants.map((variant) => ({
+      "@type": "Product",
+      name: product.options.length > 0 && variant.title ? `${product.name} - ${variant.title}` : product.name,
+      sku: variant.sku,
+      image: variant.images.map((img) => absoluteUrl(img.url)),
+      ...Object.fromEntries(
+        product.options.flatMap((o) => {
+          const prop = VARIES_BY[o.param];
+          const value = o.values.find((v) => v.slug === variant.selection[o.param])?.value ?? variant.title;
+          return prop ? [[prop, value]] : [];
+        }),
+      ),
+      offers: {
+        "@type": "Offer",
+        url: absoluteUrl(variantHref(product, variant)),
+        priceCurrency: "PKR",
+        price: variant.pricePKR,
+        availability: variant.inStock ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+        seller: { "@type": "Organization", name: siteConfig.name },
       },
-    },
+    })),
   };
 }
 
