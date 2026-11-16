@@ -44,7 +44,11 @@ export type CatalogProduct = {
   seoDescription?: string | null;
   options: CatalogOption[];
   variants: CatalogVariant[];
+  /** Set for bundles: what one bundle contains. */
+  bundle?: { items: BundleContent[] };
 };
+
+export type BundleContent = { variantId: string; sku: string; name: string; quantity: number; href: string };
 
 /** One listing card: a single variant of a product. */
 export type Product = {

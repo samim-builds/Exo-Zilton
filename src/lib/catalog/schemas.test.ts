@@ -90,3 +90,49 @@ describe("productInputSchema", () => {
     ).toEqual(["options.1.name: Option names must be unique", "images.0.variantKey: Unknown variant"]);
   });
 });
+
+describe("productInputSchema for bundles", () => {
+  const bundle: ProductInput = {
+    ...valid,
+    slug: "gift-set",
+    kind: "BUNDLE",
+    options: [],
+    variants: [variant("default", {}, "EZ-GIFT")],
+    images: [],
+    bundle: { mode: "PERCENT_OFF", discountPercent: 10, items: [{ variantId: "v1", quantity: 2 }] },
+  };
+
+  it("accepts a bundle with contents", () => {
+    expect(issues(bundle)).toEqual([]);
+  });
+
+  it("defaults to a standard product with no bundle", () => {
+    const parsed = productInputSchema.parse(valid);
+    expect(parsed.kind).toBe("STANDARD");
+    expect(parsed.bundle).toBeNull();
+  });
+
+  it("needs at least one item, each listed once", () => {
+    expect(issues({ ...bundle, bundle: { ...bundle.bundle, items: [] } })).toEqual(["bundle.items: Add at least one item to the bundle"]);
+    expect(
+      issues({ ...bundle, bundle: { ...bundle.bundle, items: [{ variantId: "v1", quantity: 1 }, { variantId: "v1", quantity: 1 }] } }),
+    ).toEqual(["bundle.items.1.variantId: This item is already in the bundle"]);
+  });
+
+  it("needs a discount for percent-off pricing", () => {
+    expect(issues({ ...bundle, bundle: { ...bundle.bundle, discountPercent: null } })).toEqual([
+      "bundle.discountPercent: Enter the discount, from 1 to 90%",
+    ]);
+  });
+
+  it("has exactly one variant and no options", () => {
+    expect(issues({ ...bundle, options: valid.options, variants: valid.variants })).toEqual([
+      "options: A bundle has no options",
+      "variants: A bundle has a single SKU",
+    ]);
+  });
+
+  it("needs bundle settings when the kind is bundle", () => {
+    expect(issues({ ...bundle, bundle: null })).toEqual(["bundle: Add the bundle's contents"]);
+  });
+});

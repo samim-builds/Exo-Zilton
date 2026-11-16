@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { getProductForEdit, listCategoriesForEditor } from "@/lib/catalog/admin-queries";
+import { getProductForEdit, listBundleComponentOptions, listCategoriesForEditor } from "@/lib/catalog/admin-queries";
 import { ProductEditor } from "../editor/ProductEditor";
 
 export const metadata = {
@@ -13,6 +13,7 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
 
   const [product, categories] = await Promise.all([getProductForEdit(id), listCategoriesForEditor()]);
   if (!product) notFound();
+  const components = product.kind === "BUNDLE" ? await listBundleComponentOptions() : [];
 
-  return <ProductEditor key={product.id} initial={product} categories={categories} />;
+  return <ProductEditor key={product.id} initial={product} categories={categories} components={components} />;
 }

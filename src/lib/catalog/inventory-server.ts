@@ -1,5 +1,6 @@
 import "server-only";
 import type { Prisma } from "@/generated/prisma/client";
+import { stockLinesForOrderItems } from "./bundles";
 import { adjustmentDelta, stockMovementsForTransition, type OrderStatusName, type StockAdjustment } from "./inventory";
 
 type Tx = Prisma.TransactionClient;
@@ -30,7 +31,9 @@ export async function applyMovements(tx: Tx, movements: MovementInput[]): Promis
 /** Stock changes for an order moving between statuses (see stockMovementsForTransition). */
 export async function applyOrderTransition(tx: Tx, orderId: string, from: OrderStatusName, to: OrderStatusName, orderNumber?: number) {
   if (from === to) return;
-  const items = await tx.orderItem.findMany({ where: { orderId }, select: { variantId: true, quantity: true } });
+  const sold = await tx.orderItem.findMany({ where: { orderId }, select: { variantId: true, quantity: true, bundleComponents: true } });
+  // Bundle lines move the components they were sold with, not the bundle itself.
+  const items = stockLinesForOrderItems(sold);
   const variantIds = [...new Set(items.flatMap((i) => (i.variantId ? [i.variantId] : [])))];
   const tracked = await tx.productVariant.findMany({ where: { id: { in: variantIds }, trackInventory: true }, select: { id: true } });
   const movements = stockMovementsForTransition(from, to, items, new Set(tracked.map((v) => v.id)));

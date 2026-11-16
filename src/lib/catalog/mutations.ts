@@ -67,13 +67,17 @@ export async function saveProductGraph(data: ProductData): Promise<{ id: string;
     sortOrder: data.sortOrder,
     seoTitle: data.seoTitle || null,
     seoDescription: data.seoDescription || null,
+    bundlePricingMode: data.bundle?.mode ?? "FIXED",
+    bundleDiscountPercent: data.bundle?.mode === "PERCENT_OFF" ? data.bundle.discountPercent : null,
   } satisfies Prisma.ProductUncheckedUpdateInput;
 
   try {
     return await prisma.$transaction(async (tx) => {
+      // The kind is fixed at creation: a product's variants may already sit inside bundles.
       const product = data.id
         ? await tx.product.update({ where: { id: data.id }, data: fields })
-        : await tx.product.create({ data: { ...fields, published: false } });
+        : await tx.product.create({ data: { ...fields, kind: data.kind, published: false } });
+      const isBundle = product.kind === "BUNDLE";
 
       // Options and their values: keep matching ones (so variant links survive), drop the rest.
       const existingOptions = await tx.productOption.findMany({
@@ -107,11 +111,12 @@ export async function saveProductGraph(data: ProductData): Promise<{ id: string;
       // variant that appears on past orders is deactivated instead, keeping the link.
       const existingVariants = await tx.productVariant.findMany({
         where: { productId: product.id },
-        select: { id: true, _count: { select: { orderItems: true } } },
+        select: { id: true, _count: { select: { orderItems: true, inBundles: true } } },
       });
       const keptIds = new Set(data.variants.flatMap((v) => (v.id ? [v.id] : [])));
       for (const old of existingVariants.filter((v) => !keptIds.has(v.id))) {
-        if (old._count.orderItems > 0) {
+        // Variants in a bundle are kept too (BundleItem restricts deletes).
+        if (old._count.orderItems > 0 || old._count.inBundles > 0) {
           await tx.productVariant.update({ where: { id: old.id }, data: { active: false, sku: `${old.id}-retired` } });
         } else {
           await tx.productVariant.delete({ where: { id: old.id } });
@@ -128,7 +133,8 @@ export async function saveProductGraph(data: ProductData): Promise<{ id: string;
           compareAtPKR: variant.compareAtPKR ?? null,
           compareAtUSD: variant.compareAtUSD ?? null,
           costPKR: variant.costPKR ?? null,
-          trackInventory: variant.trackInventory,
+          // A bundle's stock is its components' stock.
+          trackInventory: isBundle ? false : variant.trackInventory,
           lowStockThreshold: variant.lowStockThreshold,
           weightGrams: variant.weightGrams ?? null,
           attributes: attributes.variants[position],
@@ -142,7 +148,7 @@ export async function saveProductGraph(data: ProductData): Promise<{ id: string;
         const saved = owned
           ? await tx.productVariant.update({ where: { id: variant.id }, data: variantFields })
           : await tx.productVariant.create({ data: { ...variantFields, productId: product.id } });
-        if (!owned && variant.trackInventory && variant.stockQty !== 0) {
+        if (!owned && !isBundle && variant.trackInventory && variant.stockQty !== 0) {
           await applyMovements(tx, [{ variantId: saved.id, delta: variant.stockQty, reason: "RESTOCK", note: "Opening stock" }]);
         }
         variantIdByKey.set(variant.key, saved.id);
@@ -169,6 +175,8 @@ export async function saveProductGraph(data: ProductData): Promise<{ id: string;
         });
       }
 
+      if (isBundle) await saveBundleItems(tx, product.id, data.bundle?.items ?? []);
+
       return { id: product.id, slug: product.slug, created: !data.id };
     });
   } catch (error) {
@@ -177,6 +185,22 @@ export async function saveProductGraph(data: ProductData): Promise<{ id: string;
     }
     throw error;
   }
+}
+
+/** Replaces a bundle's contents. Components must be variants of standard products. */
+async function saveBundleItems(tx: Prisma.TransactionClient, bundleProductId: string, items: { variantId: string; quantity: number }[]) {
+  const variants = await tx.productVariant.findMany({
+    where: { id: { in: items.map((i) => i.variantId) } },
+    select: { id: true, product: { select: { kind: true } } },
+  });
+  const kinds = new Map(variants.map((v) => [v.id, v.product.kind]));
+  if (items.some((i) => !kinds.has(i.variantId))) throw new AdminActionError("One of the bundle items no longer exists. Remove it and save again.");
+  if (items.some((i) => kinds.get(i.variantId) === "BUNDLE")) throw new AdminActionError("A bundle can't contain another bundle.");
+
+  await tx.bundleItem.deleteMany({ where: { bundleProductId } });
+  await tx.bundleItem.createMany({
+    data: items.map((item, position) => ({ bundleProductId, variantId: item.variantId, quantity: item.quantity, position })),
+  });
 }
 
 export async function saveCategoryGraph(data: CategoryData): Promise<{ id: string; created: boolean }> {

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { BundleComponentSnapshot } from "@/lib/catalog/bundles";
 import { ChevronLeft } from "lucide-react";
 import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
@@ -15,6 +16,11 @@ export const metadata = {
 type PageProps = {
   params: Promise<{ id: string }>;
 };
+
+// Components recorded on a bundle line when it was sold.
+function bundleParts(value: unknown): BundleComponentSnapshot[] {
+  return Array.isArray(value) ? (value as BundleComponentSnapshot[]) : [];
+}
 
 export default async function AdminOrderDetailPage({ params }: PageProps) {
   if (!(await isAdminAuthenticated())) {
@@ -47,12 +53,23 @@ export default async function AdminOrderDetailPage({ params }: PageProps) {
             <h2 className="mb-4 font-semibold">Items</h2>
             <ul className="space-y-2 text-sm tabular-nums">
               {order.items.map((item) => (
-                <li key={item.id} className="flex justify-between gap-4">
-                  <span>
-                    {item.quantity} × {item.productName}{" "}
-                    <span className="text-muted-foreground">({item.sku})</span>
-                  </span>
-                  <span>{formatMoney(item.unitPrice * item.quantity, order.currency)}</span>
+                <li key={item.id}>
+                  <div className="flex justify-between gap-4">
+                    <span>
+                      {item.quantity} × {item.productName}{" "}
+                      <span className="text-muted-foreground">({item.sku})</span>
+                    </span>
+                    <span>{formatMoney(item.unitPrice * item.quantity, order.currency)}</span>
+                  </div>
+                  {bundleParts(item.bundleComponents).length > 0 && (
+                    <ul className="mt-1 space-y-0.5 border-l pl-3 text-xs text-muted-foreground">
+                      {bundleParts(item.bundleComponents).map((part) => (
+                        <li key={part.variantId}>
+                          {part.quantity * item.quantity} × {part.name} ({part.sku})
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </li>
               ))}
             </ul>

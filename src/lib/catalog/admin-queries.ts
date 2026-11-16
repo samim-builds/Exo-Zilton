@@ -2,6 +2,7 @@ import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/db";
 import type { AttributeDef } from "./attributes";
 import type { CategoryInput, ProductInput } from "./schemas";
+import { bundleAvailability, bundlePricing } from "./bundles";
 
 export type CategoryNodeView = {
   id: string;
@@ -101,6 +102,7 @@ export async function getProductForEdit(id: string): Promise<ProductInput | null
         include: { optionValues: { include: { optionValue: { include: { option: true } } } } },
       },
       images: { orderBy: { sortOrder: "asc" } },
+      bundleItems: { orderBy: { position: "asc" }, select: { variantId: true, quantity: true } },
     },
   });
   if (!row) return null;
@@ -143,6 +145,11 @@ export async function getProductForEdit(id: string): Promise<ProductInput | null
 
   return {
     id: row.id,
+    kind: row.kind,
+    bundle:
+      row.kind === "BUNDLE"
+        ? { mode: row.bundlePricingMode, discountPercent: row.bundleDiscountPercent, items: row.bundleItems }
+        : null,
     name: row.name,
     slug: row.slug,
     subtitle: row.subtitle ?? "",
@@ -181,11 +188,14 @@ export type ProductListRow = {
   minPKR: number | null;
   maxPKR: number | null;
   stock: { tracked: boolean; total: number; outOfStock: number };
+  /** Bundles only: item count and how many bundles the components can fill (null = unlimited). */
+  bundle: { itemCount: number; available: number | null } | null;
   featured: boolean;
   updatedAt: Date;
 };
 
 export async function listProductsAdmin(args: {
+  kind: "STANDARD" | "BUNDLE";
   q: string;
   status?: string[];
   category?: string[];
@@ -199,6 +209,7 @@ export async function listProductsAdmin(args: {
   const categories = args.category ?? [];
   const categoryIds = categories.filter((c) => c !== "none");
   const where: Prisma.ProductWhereInput = {
+    kind: args.kind,
     // Archived rows are hidden unless asked for, so converted legacy rows stay out of the way.
     status: statuses.length > 0 ? { in: statuses } : { not: "ARCHIVED" },
     AND: [
@@ -228,7 +239,13 @@ export async function listProductsAdmin(args: {
       include: {
         category: { select: { name: true } },
         images: { orderBy: { sortOrder: "asc" }, take: 1, select: { url: true } },
-        variants: { select: { pricePKR: true, active: true, trackInventory: true, stockQty: true } },
+        variants: { select: { pricePKR: true, priceUSD: true, active: true, trackInventory: true, stockQty: true } },
+        bundleItems: {
+          select: {
+            quantity: true,
+            variant: { select: { pricePKR: true, priceUSD: true, trackInventory: true, stockQty: true, active: true, product: { select: { status: true } } } },
+          },
+        },
       },
       orderBy: { [args.sort.id]: args.sort.desc ? "desc" : "asc" },
       skip: args.skip,
@@ -241,7 +258,15 @@ export async function listProductsAdmin(args: {
     total,
     rows: rows.map((p) => {
       const active = p.variants.filter((v) => v.active);
-      const prices = active.map((v) => v.pricePKR);
+      const parts = p.bundleItems.map((b) => ({ ...b.variant, active: b.variant.active && b.variant.product.status === "ACTIVE", quantity: b.quantity }));
+      const prices =
+        p.kind === "BUNDLE"
+          ? active.map(
+              (v) =>
+                bundlePricing({ mode: p.bundlePricingMode, discountPercent: p.bundleDiscountPercent, fixedPKR: v.pricePKR, fixedUSD: v.priceUSD }, parts)
+                  .pricePKR,
+            )
+          : active.map((v) => v.pricePKR);
       const tracked = active.filter((v) => v.trackInventory);
       return {
         id: p.id,
@@ -259,9 +284,51 @@ export async function listProductsAdmin(args: {
           total: tracked.reduce((sum, v) => sum + v.stockQty, 0),
           outOfStock: tracked.filter((v) => v.stockQty <= 0).length,
         },
+        bundle: p.kind === "BUNDLE" ? { itemCount: parts.length, available: bundleAvailability(parts) } : null,
         featured: p.featured,
         updatedAt: p.updatedAt,
       };
     }),
   };
+}
+
+export type BundleComponentOption = {
+  variantId: string;
+  label: string;
+  sku: string;
+  pricePKR: number;
+  priceUSD: number;
+  trackInventory: boolean;
+  stockQty: number;
+  /** False when the variant or its product can't currently be sold. */
+  sellable: boolean;
+};
+
+/** Variants that can go inside a bundle: those of standard, non-archived products. */
+export async function listBundleComponentOptions(): Promise<BundleComponentOption[]> {
+  const variants = await prisma.productVariant.findMany({
+    where: { product: { kind: "STANDARD", status: { not: "ARCHIVED" } } },
+    select: {
+      id: true,
+      sku: true,
+      title: true,
+      pricePKR: true,
+      priceUSD: true,
+      trackInventory: true,
+      stockQty: true,
+      active: true,
+      product: { select: { name: true, status: true } },
+    },
+    orderBy: [{ product: { sortOrder: "asc" } }, { product: { name: "asc" } }, { position: "asc" }],
+  });
+  return variants.map((v) => ({
+    variantId: v.id,
+    label: v.title ? `${v.product.name} - ${v.title}` : v.product.name,
+    sku: v.sku,
+    pricePKR: v.pricePKR,
+    priceUSD: v.priceUSD,
+    trackInventory: v.trackInventory,
+    stockQty: v.stockQty,
+    sellable: v.active && v.product.status === "ACTIVE",
+  }));
 }

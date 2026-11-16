@@ -76,6 +76,12 @@ function RowActions({ row }: { row: ProductListRow }) {
   );
 }
 
+function BundleStock({ available }: { available: number | null }) {
+  if (available === null) return <span className="text-muted-foreground">Not tracked</span>;
+  if (available === 0) return <span className="text-amber-700">Out of stock</span>;
+  return <span>{available} can be made</span>;
+}
+
 const columns: ColumnDef<ProductListRow>[] = [
   {
     id: "name",
@@ -116,7 +122,12 @@ const columns: ColumnDef<ProductListRow>[] = [
   {
     id: "variants",
     header: "Variants",
-    cell: ({ row }) => <span className="tabular-nums">{row.original.variantCount || "—"}</span>,
+    cell: ({ row }) =>
+      row.original.bundle ? (
+        <span className="tabular-nums">{row.original.bundle.itemCount} items</span>
+      ) : (
+        <span className="tabular-nums">{row.original.variantCount || "—"}</span>
+      ),
   },
   {
     id: "price",
@@ -134,7 +145,8 @@ const columns: ColumnDef<ProductListRow>[] = [
     id: "stock",
     header: "Stock",
     cell: ({ row }) => {
-      const { stock } = row.original;
+      const { stock, bundle } = row.original;
+      if (bundle) return <BundleStock available={bundle.available} />;
       if (!stock.tracked) return <span className="text-muted-foreground">Not tracked</span>;
       return (
         <span className={stock.outOfStock > 0 ? "text-amber-700" : undefined}>
@@ -214,14 +226,16 @@ export function ProductsTable({
   rows,
   total,
   categories,
+  kind = "STANDARD",
 }: {
   rows: ProductListRow[];
   total: number;
   categories: { id: string; name: string }[];
+  kind?: "STANDARD" | "BUNDLE";
 }) {
   return (
     <DataTable
-      columns={columns}
+      columns={kind === "BUNDLE" ? columns.map((c) => (c.id === "variants" ? { ...c, header: "Contents" } : c)) : columns}
       data={rows}
       total={total}
       getRowId={(r) => r.id}
@@ -242,7 +256,11 @@ export function ProductsTable({
           options: [...categories.map((c) => ({ value: c.id, label: c.name })), { value: "none", label: "Uncategorised" }],
         },
       ]}
-      emptyMessage="No products yet. Use Add product to create the first one."
+      emptyMessage={
+        kind === "BUNDLE"
+          ? "No bundles yet. Use Create bundle to sell several items together."
+          : "No products yet. Use Add product to create the first one."
+      }
       bulkActions={(selected, clear) => <BulkActions selected={selected} clear={clear} />}
     />
   );

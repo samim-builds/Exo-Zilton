@@ -85,3 +85,20 @@ describe("priceOrderLines", () => {
     expect(result.ok && result.items[0]).toMatchObject({ productId: "p9", variantId: null, productName: "Old Row", unitPrice: 900 });
   });
 });
+
+describe("priceOrderLines with bundles", () => {
+  const bundle: CatalogProduct = {
+    ...catalog[0],
+    id: "b1",
+    slug: "gift-set",
+    name: "Gift set",
+    options: [],
+    variants: [v({ key: "bv", id: "bv", sku: "EZ-GIFT", pricePKR: 9000, priceUSD: 60 })],
+    bundle: { items: [{ variantId: "v1", sku: "EZ-001", name: "Mortar and Pestle - Size 1", quantity: 2, href: "/products/mortar-and-pestle" }] },
+  };
+
+  it("records the components sold with a bundle line", () => {
+    const result = priceOrderLines([bundle], [{ variantId: "bv", quantity: 1 }], "PKR");
+    expect(result.ok && result.items[0].bundleComponents).toEqual([{ variantId: "v1", sku: "EZ-001", name: "Mortar and Pestle - Size 1", quantity: 2 }]);
+  });
+});

@@ -22,7 +22,7 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
   const db = Boolean(process.env.DATABASE_URL);
   const [{ rows, total }, categories] = db
     ? await Promise.all([
-        listProductsAdmin({ ...params, status: params.filters.status, category: params.filters.category }),
+        listProductsAdmin({ ...params, kind: "STANDARD", status: params.filters.status, category: params.filters.category }),
         prisma.category.findMany({ select: { id: true, name: true }, orderBy: { name: "asc" } }),
       ])
     : [{ rows: [], total: 0 }, []];

@@ -18,7 +18,7 @@ export const saveProduct = adminAction(
       entityType: "product",
       entityId: result.id,
       action: result.created ? "CREATE" : "UPDATE",
-      summary: `${result.created ? "Created" : "Updated"} product "${data.name}"`,
+      summary: `${result.created ? "Created" : "Updated"} ${data.kind === "BUNDLE" ? "bundle" : "product"} "${data.name}"`,
       diff: { status: data.status, variants: data.variants.length },
     });
     return result;
@@ -52,6 +52,15 @@ export const deleteProducts = adminAction(
     if (ordered > 0) {
       throw new AdminActionError(
         `${ordered} of these product(s) appear on past orders. Archive them instead so order history stays intact.`,
+      );
+    }
+    const bundled = await prisma.product.findMany({
+      where: { id: { in: ids }, variants: { some: { inBundles: { some: { bundleProductId: { notIn: ids } } } } } },
+      select: { name: true },
+    });
+    if (bundled.length > 0) {
+      throw new AdminActionError(
+        `${bundled.map((p) => `"${p.name}"`).join(", ")} is part of a bundle. Remove it from the bundle first, or archive it.`,
       );
     }
     const names = await prisma.product.findMany({ where: { id: { in: ids } }, select: { name: true } });

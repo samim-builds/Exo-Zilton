@@ -8,6 +8,7 @@ import {
   toCatalogProducts,
   variantHref,
   type CatalogProductInput,
+  type VariantInput,
 } from "./storefront";
 
 const variant = (over: Partial<CatalogProductInput["variants"][number]>): CatalogProductInput["variants"][number] => ({
@@ -268,5 +269,69 @@ describe("categorySubtree", () => {
   it("survives cycles and unknown slugs", () => {
     expect([...categorySubtree(categories, "loop-1")].sort()).toEqual(["loop-1", "loop-2"]);
     expect([...categorySubtree(categories, "nope")]).toEqual([]);
+  });
+});
+
+describe("toCatalogProducts with bundles", () => {
+  const component = (over: Record<string, unknown>) => ({
+    id: "c1",
+    sku: "EZ-001",
+    title: "Size 1",
+    pricePKR: 3000,
+    priceUSD: 20,
+    trackInventory: true,
+    stockQty: 10,
+    active: true,
+    productName: "Mortar and Pestle",
+    productSlug: "mortar-and-pestle",
+    ...over,
+  });
+  const bundleInput = (bundle: CatalogProductInput["bundle"], own: Partial<VariantInput> = {}): CatalogProductInput => ({
+    ...base,
+    id: "b1",
+    slug: "gift-set",
+    name: "Gift set",
+    options: [],
+    images: [],
+    variants: [variant({ id: "bv", sku: "EZ-GIFT", title: "", pricePKR: 9999, priceUSD: 99, isDefault: true, ...own })],
+    bundle,
+  });
+
+  it("prices a percent-off bundle from its components and lists what is inside", () => {
+    const [p] = toCatalogProducts([
+      bundleInput({
+        mode: "PERCENT_OFF",
+        discountPercent: 10,
+        items: [
+          { quantity: 2, variant: component({}) },
+          { quantity: 1, variant: component({ id: "c2", sku: "EZ-002", title: "Size 2", pricePKR: 4000, priceUSD: 25 }) },
+        ],
+      }),
+    ]);
+    expect(p.variants[0]).toMatchObject({ pricePKR: 9000, priceUSD: 59, compareAtPKR: 10000, compareAtUSD: 65, inStock: true });
+    expect(p.bundle?.items).toEqual([
+      { variantId: "c1", sku: "EZ-001", name: "Mortar and Pestle - Size 1", quantity: 2, href: "/products/mortar-and-pestle" },
+      { variantId: "c2", sku: "EZ-002", name: "Mortar and Pestle - Size 2", quantity: 1, href: "/products/mortar-and-pestle" },
+    ]);
+  });
+
+  it("keeps the bundle's own price when fixed, with the separate total as compare-at", () => {
+    const [p] = toCatalogProducts([bundleInput({ mode: "FIXED", discountPercent: null, items: [{ quantity: 4, variant: component({}) }] })]);
+    expect(p.variants[0]).toMatchObject({ pricePKR: 9999, priceUSD: 99, compareAtPKR: 12000, compareAtUSD: null });
+  });
+
+  it("is out of stock when a component can't fill one bundle, whatever the bundle variant's own count", () => {
+    const [p] = toCatalogProducts([
+      bundleInput({ mode: "FIXED", discountPercent: null, items: [{ quantity: 3, variant: component({ stockQty: 2 }) }] }, { trackInventory: false }),
+    ]);
+    expect(p.variants[0].inStock).toBe(false);
+  });
+
+  it("hides a bundle with no components", () => {
+    expect(toCatalogProducts([bundleInput({ mode: "FIXED", discountPercent: null, items: [] })])).toEqual([]);
+  });
+
+  it("leaves standard products without bundle contents", () => {
+    expect(toCatalogProducts([base])[0].bundle).toBeUndefined();
   });
 });

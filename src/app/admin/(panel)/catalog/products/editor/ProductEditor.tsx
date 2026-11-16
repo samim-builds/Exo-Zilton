@@ -10,9 +10,11 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { effectiveAttributes, type AttributeDef } from "@/lib/catalog/attributes";
 import type { ProductInput } from "@/lib/catalog/schemas";
+import type { BundleComponentOption } from "@/lib/catalog/admin-queries";
 import { saveProduct } from "../actions";
 import { STATUS_STYLES } from "../ProductsTable";
 import { AttributesTab } from "./AttributesTab";
+import { BundleTab } from "./BundleTab";
 import { GeneralTab } from "./GeneralTab";
 import { MediaTab } from "./MediaTab";
 import { SeoTab } from "./SeoTab";
@@ -33,11 +35,23 @@ const FIELD_TABS: Record<string, string> = {
   images: "media",
   options: "variants",
   variants: "variants",
+  bundle: "contents",
   seoTitle: "seo",
   seoDescription: "seo",
 };
 
-export function ProductEditor({ initial, categories }: { initial: ProductInput; categories: EditorCategory[] }) {
+export function ProductEditor({
+  initial,
+  categories,
+  components = [],
+}: {
+  initial: ProductInput;
+  categories: EditorCategory[];
+  /** Bundles only: the variants that can go inside. */
+  components?: BundleComponentOption[];
+}) {
+  const isBundle = initial.kind === "BUNDLE";
+  const noun = isBundle ? "bundle" : "product";
   const router = useRouter();
   const [form, setForm] = useState(initial);
   const [baseline, setBaseline] = useState(() => JSON.stringify(initial));
@@ -69,13 +83,14 @@ export function ProductEditor({ initial, categories }: { initial: ProductInput; 
         );
         setErrors(fieldErrors.length > 0 ? fieldErrors : [res.error]);
         const firstField = Object.keys(res.fieldErrors ?? {})[0];
-        if (firstField && FIELD_TABS[firstField]) setTab(FIELD_TABS[firstField]);
+        const target = firstField && (isBundle && firstField === "variants" ? "contents" : FIELD_TABS[firstField]);
+        if (target) setTab(target);
         toast.error(res.error);
         return;
       }
       setErrors([]);
       setBaseline(JSON.stringify(form));
-      toast.success(res.data.created ? "Product created" : "Product saved");
+      toast.success(`${isBundle ? "Bundle" : "Product"} ${res.data.created ? "created" : "saved"}`);
       if (res.data.created) router.replace(`/admin/catalog/products/${res.data.id}`);
       else router.refresh();
     });
@@ -87,11 +102,11 @@ export function ProductEditor({ initial, categories }: { initial: ProductInput; 
     <div>
       <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
         <div>
-          <Link href="/admin/catalog/products" className="text-sm text-muted-foreground hover:text-foreground">
-            ← Products
+          <Link href={isBundle ? "/admin/catalog/bundles" : "/admin/catalog/products"} className="text-sm text-muted-foreground hover:text-foreground">
+            ← {isBundle ? "Bundles" : "Products"}
           </Link>
           <div className="mt-1 flex items-center gap-3">
-            <h1 className="text-[1.375rem] leading-tight font-semibold tracking-tight text-foreground sm:text-[1.5rem]">{form.name || "New product"}</h1>
+            <h1 className="text-[1.375rem] leading-tight font-semibold tracking-tight text-foreground sm:text-[1.5rem]">{form.name || `New ${noun}`}</h1>
             <Badge variant="outline" className={STATUS_STYLES[form.status]}>
               {form.status.charAt(0) + form.status.slice(1).toLowerCase()}
             </Badge>
@@ -122,8 +137,14 @@ export function ProductEditor({ initial, categories }: { initial: ProductInput; 
         <TabsList className="mb-4 flex-wrap">
           <TabsTrigger value="general">General</TabsTrigger>
           <TabsTrigger value="media">Media ({form.images.length})</TabsTrigger>
-          <TabsTrigger value="variants">Variants ({variantCount})</TabsTrigger>
-          <TabsTrigger value="attributes">Attributes{attributeDefs.length > 0 ? ` (${attributeDefs.length})` : ""}</TabsTrigger>
+          {isBundle ? (
+            <TabsTrigger value="contents">Contents and price ({form.bundle?.items.length ?? 0})</TabsTrigger>
+          ) : (
+            <>
+              <TabsTrigger value="variants">Variants ({variantCount})</TabsTrigger>
+              <TabsTrigger value="attributes">Attributes{attributeDefs.length > 0 ? ` (${attributeDefs.length})` : ""}</TabsTrigger>
+            </>
+          )}
           <TabsTrigger value="seo">SEO</TabsTrigger>
         </TabsList>
         <TabsContent value="general">
@@ -132,12 +153,20 @@ export function ProductEditor({ initial, categories }: { initial: ProductInput; 
         <TabsContent value="media">
           <MediaTab form={form} update={update} />
         </TabsContent>
-        <TabsContent value="variants">
-          <VariantsTab form={form} update={update} />
-        </TabsContent>
-        <TabsContent value="attributes">
-          <AttributesTab form={form} update={update} defs={attributeDefs} />
-        </TabsContent>
+        {isBundle ? (
+          <TabsContent value="contents">
+            <BundleTab form={form} update={update} components={components} />
+          </TabsContent>
+        ) : (
+          <>
+            <TabsContent value="variants">
+              <VariantsTab form={form} update={update} />
+            </TabsContent>
+            <TabsContent value="attributes">
+              <AttributesTab form={form} update={update} defs={attributeDefs} />
+            </TabsContent>
+          </>
+        )}
         <TabsContent value="seo">
           <SeoTab form={form} update={update} />
         </TabsContent>
@@ -159,7 +188,7 @@ export function ProductEditor({ initial, categories }: { initial: ProductInput; 
           )}
           <Button onClick={save} disabled={saving || (!dirty && Boolean(initial.id))}>
             {saving && <Loader2 className="animate-spin" />}
-            {initial.id ? "Save" : "Create product"}
+            {initial.id ? "Save" : `Create ${noun}`}
           </Button>
         </div>
       </div>

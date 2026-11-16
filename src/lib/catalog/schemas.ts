@@ -34,9 +34,20 @@ export const variantInputSchema = z.object({
   active: z.boolean(),
 });
 
+export const bundleInputSchema = z.object({
+  mode: z.enum(["FIXED", "PERCENT_OFF"]),
+  discountPercent: z.number().int().nullable(),
+  items: z
+    .array(z.object({ variantId: z.string().min(1), quantity: z.number().int().min(1, "At least 1").max(20, "At most 20") }))
+    .max(20, "At most 20 items"),
+});
+
 export const productInputSchema = z
   .object({
     id: z.string().optional(),
+    kind: z.enum(["STANDARD", "BUNDLE"]).default("STANDARD"),
+    /** Bundles only: pricing and contents. */
+    bundle: bundleInputSchema.nullable().default(null),
     name: z.string().trim().min(2, "At least 2 characters").max(160),
     slug: slugSchema,
     subtitle: optionalText,
@@ -67,6 +78,29 @@ export const productInputSchema = z
       .max(40),
   })
   .superRefine((product, ctx) => {
+    if (product.kind === "BUNDLE") {
+      const bundle = product.bundle;
+      if (!bundle) ctx.addIssue({ code: "custom", path: ["bundle"], message: "Add the bundle's contents" });
+      if (product.options.length > 0) ctx.addIssue({ code: "custom", path: ["options"], message: "A bundle has no options" });
+      if (product.variants.length !== 1) ctx.addIssue({ code: "custom", path: ["variants"], message: "A bundle has a single SKU" });
+      if (bundle) {
+        if (bundle.items.length === 0) {
+          ctx.addIssue({ code: "custom", path: ["bundle", "items"], message: "Add at least one item to the bundle" });
+        }
+        const seen = new Set<string>();
+        bundle.items.forEach((item, i) => {
+          if (seen.has(item.variantId)) {
+            ctx.addIssue({ code: "custom", path: ["bundle", "items", i, "variantId"], message: "This item is already in the bundle" });
+          }
+          seen.add(item.variantId);
+        });
+        const pct = bundle.discountPercent;
+        if (bundle.mode === "PERCENT_OFF" && (pct === null || pct < 1 || pct > 90)) {
+          ctx.addIssue({ code: "custom", path: ["bundle", "discountPercent"], message: "Enter the discount, from 1 to 90%" });
+        }
+      }
+    }
+
     const optionNames = new Set<string>();
     product.options.forEach((option, i) => {
       const lower = option.name.toLowerCase();

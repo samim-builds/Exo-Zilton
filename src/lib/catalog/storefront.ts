@@ -1,5 +1,6 @@
 import type { CatalogProduct, CatalogVariant, Product, ProductImageView } from "@/lib/product-types";
 import { slugifyOptionValue } from "./variants";
+import { bundleAvailability, bundlePricing, type BundlePricingMode } from "./bundles";
 
 // Maps catalog rows (product → options → variants) onto the storefront view:
 // one product page per product, variants chosen via URL params (?size=size-3).
@@ -58,6 +59,27 @@ export type CatalogProductInput = {
   images: ImageInput[];
   variants: VariantInput[];
   legacy: LegacyColumns | null;
+  /** Bundles only: the components, priced and stocked live. */
+  bundle?: BundleInput | null;
+};
+
+export type BundleComponentInput = {
+  id: string;
+  sku: string;
+  title: string;
+  pricePKR: number;
+  priceUSD: number;
+  trackInventory: boolean;
+  stockQty: number;
+  active: boolean;
+  productName: string;
+  productSlug: string;
+};
+
+export type BundleInput = {
+  mode: BundlePricingMode;
+  discountPercent: number | null;
+  items: { quantity: number; variant: BundleComponentInput }[];
 };
 
 type SearchParams = Record<string, string | string[] | undefined>;
@@ -151,10 +173,36 @@ function toCatalogProduct(input: CatalogProductInput): CatalogProduct | null {
     });
   if (variants.length === 0) return null;
 
-  return {
+  const product: CatalogProduct = {
     ...shared,
     options: options.map((o) => ({ name: o.name, param: o.param, values: o.values.map(({ value, slug }) => ({ value, slug })) })),
     variants,
+  };
+  return input.bundle ? withBundle(product, input.bundle) : product;
+}
+
+// A bundle's price and stock come from its components; its own variant only
+// carries the SKU, images and (for FIXED pricing) the price.
+function withBundle(product: CatalogProduct, bundle: BundleInput): CatalogProduct | null {
+  if (bundle.items.length === 0) return null;
+  const parts = bundle.items.map(({ quantity, variant }) => ({ ...variant, quantity }));
+  const available = bundleAvailability(parts);
+  return {
+    ...product,
+    variants: product.variants.map((v) => ({
+      ...v,
+      ...bundlePricing({ mode: bundle.mode, discountPercent: bundle.discountPercent, fixedPKR: v.pricePKR, fixedUSD: v.priceUSD }, parts),
+      inStock: available === null || available > 0,
+    })),
+    bundle: {
+      items: parts.map((p) => ({
+        variantId: p.id,
+        sku: p.sku,
+        name: p.title ? `${p.productName} - ${p.title}` : p.productName,
+        quantity: p.quantity,
+        href: `/products/${p.productSlug}`,
+      })),
+    },
   };
 }
 

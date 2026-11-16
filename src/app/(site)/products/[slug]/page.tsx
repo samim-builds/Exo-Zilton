@@ -6,6 +6,7 @@ import { ProductGallery } from "@/components/products/ProductGallery";
 import { VariantSelector } from "@/components/products/VariantSelector";
 import { ProductActions } from "@/components/products/ProductActions";
 import { ProductAccordion } from "@/components/products/ProductAccordion";
+import { BundleContents } from "@/components/products/BundleContents";
 import { BrandBanner } from "@/components/home/BrandBanner";
 import { Price } from "@/components/site/Price";
 import { getPage } from "@/lib/cms/server";
@@ -154,6 +155,11 @@ export default async function ProductPage(props: PageProps) {
                 compareAtPKR={variant.compareAtPKR}
                 compareAtUSD={variant.compareAtUSD}
               />
+              {product.bundle && (
+                <div className="mt-8">
+                  <BundleContents items={product.bundle.items} />
+                </div>
+              )}
               {product.options.length > 0 && (
                 <div className="mt-8">
                   <VariantSelector product={product} current={variant} />

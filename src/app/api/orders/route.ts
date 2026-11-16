@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { queryCatalog } from "@/lib/catalog/queries";
 import { priceOrderLines } from "@/lib/catalog/order-pricing";
 import { stockShortfalls } from "@/lib/catalog/inventory";
+import { stockLinesForOrderItems } from "@/lib/catalog/bundles";
 import { isDomestic, orderRequestSchema } from "@/lib/order-schema";
 import { sendOrderEmails } from "@/lib/order-emails";
 import { CodeConflictError, commitIncentives, quoteOrder } from "@/lib/commerce/checkout";
@@ -33,17 +34,27 @@ export async function POST(request: Request) {
         { status: 409 },
       );
     }
-    // Tracked variants can't be ordered beyond what is on hand.
+    // Tracked variants can't be ordered beyond what is on hand; bundles count
+    // against their components.
+    const stockLines = stockLinesForOrderItems(priced.items.map((i) => ({ ...i, bundleComponents: i.bundleComponents ?? null })));
     const stock = await prisma.productVariant.findMany({
-      where: { id: { in: data.items.map((i) => i.variantId) } },
+      where: { id: { in: stockLines.flatMap((l) => (l.variantId ? [l.variantId] : [])) } },
       select: { id: true, trackInventory: true, stockQty: true },
     });
-    const short = stockShortfalls(data.items, new Map(stock.map((v) => [v.id, v])));
+    const short = stockShortfalls(stockLines, new Map(stock.map((v) => [v.id, v])));
     if (short.length > 0) {
-      const names = short.map((s) => {
-        const line = priced.items.find((i) => i.variantId === s.variantId);
-        return `${line ? line.productName : "An item"}: only ${s.available} left`;
-      });
+      // Name what the customer ordered: a short component is reported as its bundle.
+      const names = [
+        ...new Set(
+          short.map((s) => {
+            const line = priced.items.find((i) => i.variantId === s.variantId);
+            if (line) return `${line.productName}: only ${s.available} left`;
+            const bundle = priced.items.find((i) => i.bundleComponents?.some((c) => c.variantId === s.variantId));
+            const part = bundle?.bundleComponents?.find((c) => c.variantId === s.variantId);
+            return bundle && part ? `${bundle.productName}: only ${Math.floor(s.available / part.quantity)} left` : "An item is out of stock";
+          }),
+        ),
+      ];
       return NextResponse.json({ error: `Not enough stock. ${names.join("; ")}.` }, { status: 409 });
     }
     const { items } = priced;

@@ -48,8 +48,9 @@ export async function listInventory(args: {
 }): Promise<{ rows: InventoryRow[]; total: number }> {
   const stockFilters = stockWhere(args.stock ?? []);
   const where: Prisma.ProductVariantWhereInput = {
-    // Legacy per-size products were archived in the catalog conversion.
-    product: { status: { not: "ARCHIVED" } },
+    // Legacy per-size products were archived in the catalog conversion. Bundles
+    // hold no stock of their own, so they are left out.
+    product: { status: { not: "ARCHIVED" }, kind: "STANDARD" },
     AND: [
       args.q
         ? {

@@ -8,6 +8,10 @@ const catalogInclude = {
   category: { select: { slug: true, name: true } },
   options: { include: { values: true } },
   variants: { include: { optionValues: { select: { optionValueId: true } } } },
+  bundleItems: {
+    orderBy: { position: "asc" },
+    include: { variant: { include: { product: { select: { name: true, slug: true, status: true } } } } },
+  },
 } satisfies Prisma.ProductInclude;
 
 type CatalogRow = Prisma.ProductGetPayload<{ include: typeof catalogInclude }>;
@@ -25,18 +29,34 @@ function toInput(row: CatalogRow): CatalogProductInput {
       priceUSD: row.priceUSD,
       inStock: row.inStock,
     },
+    bundle:
+      row.kind === "BUNDLE"
+        ? {
+            mode: row.bundlePricingMode,
+            discountPercent: row.bundleDiscountPercent,
+            items: row.bundleItems.map((item) => ({
+              quantity: item.quantity,
+              variant: {
+                ...item.variant,
+                // A component whose product is archived or drafted can't be sold.
+                active: item.variant.active && item.variant.product.status === "ACTIVE",
+                productName: item.variant.product.name,
+                productSlug: item.variant.product.slug,
+              },
+            })),
+          }
+        : null,
   };
 }
 
 /**
- * Active storefront products with their options and variants. Rows that
+ * Active storefront products (and bundles) with their options and variants. Rows that
  * predate variants are included only while their legacy `published` flag is set.
  */
 export async function queryCatalog(): Promise<CatalogProduct[]> {
   const rows = await prisma.product.findMany({
     where: {
       status: "ACTIVE",
-      kind: "STANDARD",
       OR: [{ variants: { some: { active: true } } }, { published: true }],
     },
     include: catalogInclude,
