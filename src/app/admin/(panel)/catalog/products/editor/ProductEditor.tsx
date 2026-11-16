@@ -178,8 +178,8 @@ export function ProductEditor({
       </Tabs>
 
       <div className="sticky bottom-0 z-20 -mx-4 mt-6 border-t bg-background/95 backdrop-blur sm:-mx-6 lg:-mx-8">
-        <div className="flex items-center justify-end gap-3 px-4 py-3 sm:px-6 lg:px-8">
-          <span className="mr-auto text-sm text-muted-foreground">{dirty ? "Unsaved changes" : "All changes saved"}</span>
+        <div className="flex items-center justify-end gap-2 px-4 py-3 sm:gap-3 sm:px-6 lg:px-8">
+          <span className="mr-auto truncate text-xs text-muted-foreground sm:text-sm">{dirty ? "Unsaved changes" : "All changes saved"}</span>
           {dirty && (
             <Button
               variant="ghost"

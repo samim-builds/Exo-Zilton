@@ -88,8 +88,8 @@ export function BundleTab({ form, update, components }: EditorProps & { componen
   const available = missing > 0 ? 0 : bundleAvailability(parts);
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[1fr_20rem]">
-      <div className="space-y-6">
+    <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
+      <div className="min-w-0 space-y-6">
         <Card>
           <CardHeader>
             <CardTitle>What&apos;s inside</CardTitle>
@@ -100,9 +100,9 @@ export function BundleTab({ form, update, components }: EditorProps & { componen
             {bundle.items.map((item, i) => {
               const c = byId.get(item.variantId);
               return (
-                <div key={item.variantId} className="flex items-center gap-3 rounded-md border p-3">
+                <div key={item.variantId} className="flex items-center gap-2 rounded-md border p-3 sm:gap-3">
                   <div className="min-w-0 flex-1">
-                    <p className={cn("truncate text-sm font-medium", !c && "text-destructive")}>{c ? c.label : "Item no longer available"}</p>
+                    <p className={cn("line-clamp-2 text-sm font-medium break-words sm:truncate", !c && "text-destructive")}>{c ? c.label : "Item no longer available"}</p>
                     <p className="text-xs text-muted-foreground tabular-nums">
                       {c
                         ? `${c.sku} · ${formatMoney(c.pricePKR, "PKR")} each${c.trackInventory ? ` · ${c.stockQty} in stock` : ""}${c.sellable ? "" : " · not on sale"}`
@@ -114,7 +114,7 @@ export function BundleTab({ form, update, components }: EditorProps & { componen
                     inputMode="numeric"
                     min={1}
                     aria-label={`Quantity of ${c?.label ?? "item"}`}
-                    className="h-8 w-20 tabular-nums"
+                    className="h-8 w-14 shrink-0 tabular-nums sm:w-20"
                     value={item.quantity}
                     onFocus={(e) => e.target.select()}
                     onChange={(e) =>
@@ -124,6 +124,7 @@ export function BundleTab({ form, update, components }: EditorProps & { componen
                   <Button
                     variant="ghost"
                     size="icon-sm"
+                    className="shrink-0"
                     aria-label={`Remove ${c?.label ?? "item"}`}
                     onClick={() => setBundle({ items: bundle.items.filter((_, j) => j !== i) })}
                   >
@@ -211,25 +212,25 @@ export function BundleTab({ form, update, components }: EditorProps & { componen
         </CardHeader>
         <CardContent>
           <dl className="space-y-2 text-sm tabular-nums">
-            <div className="flex justify-between gap-4">
+            <div className="flex flex-wrap justify-between gap-x-4">
               <dt className="text-muted-foreground">Bought separately</dt>
               <dd>
                 {formatMoney(separatePKR, "PKR")} · {formatMoney(separateUSD, "USD")}
               </dd>
             </div>
-            <div className="flex justify-between gap-4 font-medium">
+            <div className="flex flex-wrap justify-between gap-x-4 font-medium">
               <dt>Bundle price</dt>
               <dd>
                 {formatMoney(price.pricePKR, "PKR")} · {formatMoney(price.priceUSD, "USD")}
               </dd>
             </div>
             {price.compareAtPKR !== null && (
-              <div className="flex justify-between gap-4 text-emerald-700">
+              <div className="flex flex-wrap justify-between gap-x-4 text-emerald-700">
                 <dt>Customer saves</dt>
                 <dd>{formatMoney(price.compareAtPKR - price.pricePKR, "PKR")}</dd>
               </div>
             )}
-            <div className="flex justify-between gap-4 border-t pt-2">
+            <div className="flex flex-wrap justify-between gap-x-4 border-t pt-2">
               <dt className="text-muted-foreground">Can be made now</dt>
               <dd className={available === 0 ? "text-amber-700" : undefined}>
                 {available === null ? "Not tracked" : available === 0 ? "None, out of stock" : available}
