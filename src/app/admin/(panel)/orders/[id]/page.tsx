@@ -47,7 +47,7 @@ export default async function AdminOrderDetailPage({ params }: PageProps) {
         <OrderStatusBadge status={order.status} />
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
         <div className="space-y-6">
           <section className="rounded-lg border bg-card p-6">
             <h2 className="mb-4 font-semibold">Items</h2>
@@ -59,7 +59,7 @@ export default async function AdminOrderDetailPage({ params }: PageProps) {
                       {item.quantity} × {item.productName}{" "}
                       <span className="text-muted-foreground">({item.sku})</span>
                     </span>
-                    <span>{formatMoney(item.unitPrice * item.quantity, order.currency)}</span>
+                    <span className="shrink-0 whitespace-nowrap tabular-nums">{formatMoney(item.unitPrice * item.quantity, order.currency)}</span>
                   </div>
                   {bundleParts(item.bundleComponents).length > 0 && (
                     <ul className="mt-1 space-y-0.5 border-l pl-3 text-xs text-muted-foreground">

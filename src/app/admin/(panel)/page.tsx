@@ -160,7 +160,7 @@ export default async function AdminDashboardPage() {
         ))}
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[3fr_2fr]">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
         <Card>
           <CardHeader>
             <CardTitle>Recent orders</CardTitle>
@@ -183,10 +183,10 @@ export default async function AdminDashboardPage() {
                       href={`/admin/orders/${order.id}`}
                       className="flex items-center gap-3 py-2.5 text-sm hover:text-foreground hover:underline"
                     >
-                      <span className="w-14 font-medium">#{order.number}</span>
+                      <span className="shrink-0 font-medium sm:w-14">#{order.number}</span>
                       <span className="min-w-0 flex-1 truncate">{order.name}</span>
                       <span className="hidden text-muted-foreground sm:inline">{relativeTime(order.createdAt)}</span>
-                      <span className="w-28 text-right tabular-nums">{formatMoney(order.total, order.currency)}</span>
+                      <span className="shrink-0 text-right tabular-nums sm:w-28">{formatMoney(order.total, order.currency)}</span>
                       <OrderStatusBadge status={order.status} />
                     </Link>
                   </li>
