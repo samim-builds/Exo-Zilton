@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, ClipboardList, Package, TriangleAlert, Wallet } from "lucide-react";
+import { ArrowRight, ClipboardList, Package, TicketPercent, TriangleAlert, Wallet } from "lucide-react";
 import { prisma } from "@/lib/db";
 import { formatMoney } from "@/lib/order-schema";
 import { Button } from "@/components/ui/button";
@@ -17,13 +17,20 @@ const DAY = 24 * 60 * 60 * 1000;
 
 async function getOrderStats() {
   const since = new Date(Date.now() - 30 * DAY);
-  const [pending, recentCount, revenue, recentOrders, activity] = await Promise.all([
+  const [pending, recentCount, revenue, discounts, recentOrders, activity] = await Promise.all([
     prisma.order.count({ where: { status: "PENDING" } }),
     prisma.order.count({ where: { createdAt: { gte: since }, status: { not: "CANCELLED" } } }),
     prisma.order.groupBy({
       by: ["currency"],
       where: { createdAt: { gte: since }, status: { not: "CANCELLED" } },
       _sum: { total: true },
+    }),
+    // Discount codes only; gift vouchers are prepaid credit, not money given away.
+    prisma.order.groupBy({
+      by: ["currency"],
+      where: { createdAt: { gte: since }, status: { not: "CANCELLED" }, discountAmount: { gt: 0 } },
+      _sum: { discountAmount: true },
+      _count: true,
     }),
     prisma.order.findMany({
       orderBy: { createdAt: "desc" },
@@ -37,7 +44,16 @@ async function getOrderStats() {
   ]);
 
   const revenueBy = (currency: string) => revenue.find((r) => r.currency === currency)?._sum.total ?? 0;
-  return { pending, recentCount, pkr: revenueBy("PKR"), usd: revenueBy("USD"), recentOrders, activity };
+  const discountBy = (currency: string) => discounts.find((d) => d.currency === currency)?._sum.discountAmount ?? 0;
+  return {
+    pending,
+    recentCount,
+    pkr: revenueBy("PKR"),
+    usd: revenueBy("USD"),
+    discounts: { pkr: discountBy("PKR"), usd: discountBy("USD"), orders: discounts.reduce((n, d) => n + d._count, 0) },
+    recentOrders,
+    activity,
+  };
 }
 
 async function getCatalogStats() {
@@ -90,6 +106,15 @@ export default async function AdminDashboardPage() {
       href: "/admin/orders",
     },
     {
+      label: "Discounts given · 30 days",
+      value: stats ? formatMoney(stats.discounts.pkr, "PKR") : "—",
+      hint: stats
+        ? `${stats.discounts.orders} order(s) used a code${stats.discounts.usd > 0 ? ` · + ${formatMoney(stats.discounts.usd, "USD")}` : ""}`
+        : "From discount codes",
+      icon: TicketPercent,
+      href: "/admin/marketing/discounts",
+    },
+    {
       label: "Products",
       value: catalog?.active ?? "—",
       hint: catalog ? `${catalog.outOfStock} variant(s) out of stock` : "Active products",
@@ -118,7 +143,7 @@ export default async function AdminDashboardPage() {
         </div>
       )}
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5">
         {kpis.map((kpi) => (
           <Link key={kpi.label} href={kpi.href} className="group rounded-xl focus-visible:ring-2 focus-visible:ring-ring">
             <Card className="h-full gap-2 transition-colors group-hover:border-primary/30">

@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { segmentLabels } from "./nav-config";
+import { CommandPalette } from "./CommandPalette";
 
 function useBreadcrumbs() {
   const segments = usePathname().split("/").filter(Boolean);
@@ -57,6 +58,7 @@ export function AdminTopbar() {
           ))}
         </BreadcrumbList>
       </Breadcrumb>
+      <CommandPalette />
       <Button variant="ghost" size="sm" asChild>
         <Link href="/" target="_blank">
           <ExternalLink />
