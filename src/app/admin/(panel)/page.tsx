@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { OrderStatusBadge } from "@/components/admin/OrderStatusBadge";
 import { PageHeader } from "@/components/admin/shell/PageHeader";
+import { listLowStock } from "@/lib/catalog/inventory-queries";
 
 export const metadata = {
   title: "Admin Dashboard | Exo Zilton",
@@ -60,9 +61,10 @@ function relativeTime(date: Date): string {
 
 export default async function AdminDashboardPage() {
   const dbConfigured = Boolean(process.env.DATABASE_URL);
-  const [catalog, stats] = await Promise.all([
+  const [catalog, stats, lowStock] = await Promise.all([
     dbConfigured ? getCatalogStats().catch(() => null) : null,
     dbConfigured ? getOrderStats().catch(() => null) : null,
+    dbConfigured ? listLowStock().catch(() => null) : null,
   ]);
 
   const kpis = [
@@ -191,6 +193,42 @@ export default async function AdminDashboardPage() {
                     <span className="shrink-0 text-muted-foreground">{relativeTime(entry.createdAt)}</span>
                   </li>
                 ))}
+              </ul>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Low stock</CardTitle>
+            <CardDescription>Tracked variants at or below their alert level.</CardDescription>
+            <CardAction>
+              <Button variant="ghost" size="sm" asChild>
+                <Link href="/admin/catalog/inventory?stock=low">
+                  View all <ArrowRight />
+                </Link>
+              </Button>
+            </CardAction>
+          </CardHeader>
+          <CardContent>
+            {!lowStock || lowStock.rows.length === 0 ? (
+              <p className="py-6 text-center text-sm text-muted-foreground">Nothing is running low.</p>
+            ) : (
+              <ul className="space-y-3">
+                {lowStock.rows.map((v) => (
+                  <li key={v.id} className="flex justify-between gap-4 text-sm">
+                    <Link href={`/admin/catalog/inventory?q=${encodeURIComponent(v.sku)}`} className="min-w-0 truncate hover:underline">
+                      {v.product.name}
+                      <span className="text-muted-foreground"> · {v.title || v.sku}</span>
+                    </Link>
+                    <span className={`shrink-0 tabular-nums ${v.stockQty <= 0 ? "text-red-700" : "text-amber-700"}`}>
+                      {v.stockQty <= 0 ? "Out" : `${v.stockQty} left`}
+                    </span>
+                  </li>
+                ))}
+                {lowStock.total > lowStock.rows.length && (
+                  <li className="text-xs text-muted-foreground">and {lowStock.total - lowStock.rows.length} more</li>
+                )}
               </ul>
             )}
           </CardContent>

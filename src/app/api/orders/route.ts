@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { queryCatalog } from "@/lib/catalog/queries";
 import { priceOrderLines } from "@/lib/catalog/order-pricing";
+import { stockShortfalls } from "@/lib/catalog/inventory";
 import { isDomestic, orderRequestSchema } from "@/lib/order-schema";
 import { sendOrderEmails } from "@/lib/order-emails";
 import { CodeConflictError, commitIncentives, quoteOrder } from "@/lib/commerce/checkout";
@@ -31,6 +32,19 @@ export async function POST(request: Request) {
         { error: "Some items in your cart are no longer available. Please review your cart." },
         { status: 409 },
       );
+    }
+    // Tracked variants can't be ordered beyond what is on hand.
+    const stock = await prisma.productVariant.findMany({
+      where: { id: { in: data.items.map((i) => i.variantId) } },
+      select: { id: true, trackInventory: true, stockQty: true },
+    });
+    const short = stockShortfalls(data.items, new Map(stock.map((v) => [v.id, v])));
+    if (short.length > 0) {
+      const names = short.map((s) => {
+        const line = priced.items.find((i) => i.variantId === s.variantId);
+        return `${line ? line.productName : "An item"}: only ${s.available} left`;
+      });
+      return NextResponse.json({ error: `Not enough stock. ${names.join("; ")}.` }, { status: 409 });
     }
     const { items } = priced;
     const email = data.email.toLowerCase();

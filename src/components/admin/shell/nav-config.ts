@@ -6,6 +6,7 @@ import {
   LayoutDashboard,
   Package,
   Gift,
+  Boxes,
   FileText,
   Mail,
   Settings,
@@ -29,6 +30,7 @@ export const adminNav: AdminNavGroup[] = [
     items: [
       { href: "/admin/catalog/products", label: "Products", icon: Package },
       { href: "/admin/catalog/categories", label: "Categories", icon: FolderTree },
+      { href: "/admin/catalog/inventory", label: "Inventory", icon: Boxes },
     ],
   },
   {
@@ -62,6 +64,7 @@ export const segmentLabels: Record<string, string> = {
   catalog: "Catalog",
   categories: "Categories",
   products: "Products",
+  inventory: "Inventory",
   marketing: "Marketing",
   discounts: "Discounts",
   vouchers: "Gift vouchers",

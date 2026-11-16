@@ -5,6 +5,7 @@ import { AdminActionError } from "@/lib/admin/action";
 import { effectiveAttributes, validateAttributeValues, type AttributeDef } from "./attributes";
 import type { categoryInputSchema, productInputSchema } from "./schemas";
 import { slugifyOptionValue, variantTitle } from "./variants";
+import { applyMovements } from "./inventory-server";
 
 type ProductData = z.output<typeof productInputSchema>;
 type CategoryData = z.output<typeof categoryInputSchema>;
@@ -128,7 +129,6 @@ export async function saveProductGraph(data: ProductData): Promise<{ id: string;
           compareAtUSD: variant.compareAtUSD ?? null,
           costPKR: variant.costPKR ?? null,
           trackInventory: variant.trackInventory,
-          stockQty: variant.stockQty,
           lowStockThreshold: variant.lowStockThreshold,
           weightGrams: variant.weightGrams ?? null,
           attributes: attributes.variants[position],
@@ -137,9 +137,14 @@ export async function saveProductGraph(data: ProductData): Promise<{ id: string;
           position,
         };
         const owned = variant.id && existingVariants.some((v) => v.id === variant.id);
+        // Stock on saved variants only changes through the inventory ledger; new ones
+        // start at the entered count, recorded as an opening movement.
         const saved = owned
           ? await tx.productVariant.update({ where: { id: variant.id }, data: variantFields })
           : await tx.productVariant.create({ data: { ...variantFields, productId: product.id } });
+        if (!owned && variant.trackInventory && variant.stockQty !== 0) {
+          await applyMovements(tx, [{ variantId: saved.id, delta: variant.stockQty, reason: "RESTOCK", note: "Opening stock" }]);
+        }
         variantIdByKey.set(variant.key, saved.id);
 
         await tx.variantOptionValue.deleteMany({ where: { variantId: saved.id } });

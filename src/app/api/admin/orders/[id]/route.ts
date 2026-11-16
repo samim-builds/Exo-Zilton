@@ -4,6 +4,12 @@ import { orderUpdateSchema } from "@/lib/order-schema";
 import { requireAdmin } from "@/lib/session";
 import { diffFields, logActivity } from "@/lib/admin/activity";
 import { releaseOrderIncentives } from "@/lib/commerce/checkout";
+import { applyOrderTransition } from "@/lib/catalog/inventory-server";
+import { CATALOG_TAG } from "@/lib/products-server";
+import { revalidateTag } from "next/cache";
+
+// Another admin changed the status between reading and writing this order.
+class StatusConflict extends Error {}
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -32,6 +38,9 @@ export async function PATCH(request: Request, context: RouteContext) {
 
   try {
     const order = await prisma.$transaction(async (tx) => {
+      // Only proceed if the status is still what we read, so stock moves exactly once.
+      const guard = await tx.order.updateMany({ where: { id, status: before.status }, data: {} });
+      if (guard.count === 0) throw new StatusConflict();
       const updated = await tx.order.update({
         where: { id },
         data: {
@@ -44,6 +53,7 @@ export async function PATCH(request: Request, context: RouteContext) {
       if (updated.status === "CANCELLED" && before.status !== "CANCELLED") {
         await releaseOrderIncentives(tx, id);
       }
+      await applyOrderTransition(tx, id, before.status, updated.status, before.number);
       return updated;
     });
 
@@ -65,8 +75,15 @@ export async function PATCH(request: Request, context: RouteContext) {
       });
     }
 
+    // Stock levels decide what the storefront shows as in stock.
+    if (order.status !== before.status) revalidateTag(CATALOG_TAG, { expire: 0 });
+
     return NextResponse.json({ id: order.id, status: order.status });
-  } catch {
-    return NextResponse.json({ error: "Order not found" }, { status: 404 });
+  } catch (error) {
+    if (error instanceof StatusConflict) {
+      return NextResponse.json({ error: "This order was just updated elsewhere. Reload and try again." }, { status: 409 });
+    }
+    console.error(error);
+    return NextResponse.json({ error: "Couldn't update the order." }, { status: 500 });
   }
 }

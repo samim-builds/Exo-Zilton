@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Plus, RefreshCw, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -235,7 +236,12 @@ export function VariantsTab({ form, update }: EditorProps) {
                       />
                     </TableCell>
                     <TableCell>
-                      {v.trackInventory ? (
+                      {v.trackInventory && v.id ? (
+                        // Saved variants change stock through the inventory ledger, never by overwriting it here.
+                        <Link href={`/admin/catalog/inventory?q=${encodeURIComponent(v.sku)}`} className="text-sm tabular-nums underline-offset-4 hover:underline">
+                          {v.stockQty} <span className="text-xs text-muted-foreground">· adjust</span>
+                        </Link>
+                      ) : v.trackInventory ? (
                         <NumberInput label={`${title} stock`} value={v.stockQty} onChange={(n) => setVariant(i, { stockQty: n ?? 0 })} />
                       ) : (
                         <span className="text-xs text-muted-foreground">—</span>

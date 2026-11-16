@@ -154,6 +154,7 @@ model ProductVariant {
   optionValues      VariantOptionValue[]
   images            ProductImage[]
   orderItems        OrderItem[]
+  movements         InventoryMovement[]
 
   @@index([productId, position])
 }
@@ -454,4 +455,30 @@ model Subscriber {
   createdAt         DateTime @default(now())
 
   @@index([createdAt])
+}
+
+enum InventoryReason {
+  ORDER
+  CANCEL
+  RESTOCK
+  ADJUSTMENT
+  RETURN
+}
+
+// Every stock change, so the on-hand count can be explained. stockQty on the
+// variant is the running total; rows here are written in the same transaction.
+model InventoryMovement {
+  id        String          @id @default(cuid())
+  variantId String
+  variant   ProductVariant  @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  delta     Int
+  // Stock after this movement, for an at-a-glance history.
+  balance   Int
+  reason    InventoryReason
+  orderId   String?
+  note      String?
+  createdAt DateTime        @default(now())
+
+  @@index([variantId, createdAt])
+  @@index([orderId])
 }

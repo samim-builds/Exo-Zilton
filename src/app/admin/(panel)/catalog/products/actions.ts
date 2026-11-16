@@ -87,7 +87,8 @@ export const duplicateProduct = adminAction(
       name: `${source.name} (copy)`,
       slug,
       status: "DRAFT",
-      variants: source.variants.map((v) => ({ ...v, id: undefined, sku: `${v.sku}${suffix}` })),
+      // A copy is a new product with no stock of its own.
+      variants: source.variants.map((v) => ({ ...v, id: undefined, sku: `${v.sku}${suffix}`, stockQty: 0 })),
     });
     const result = await saveProductGraph(copy);
     await logActivity({
