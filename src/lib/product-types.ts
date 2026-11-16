@@ -1,6 +1,9 @@
 import type { Product as DbProduct, ProductImage } from "@/generated/prisma/client";
 
 export type Product = {
+  /** Set for database-backed entries; absent in the static fallback. */
+  productId?: string;
+  variantId?: string;
   slug: string;
   name: string;
   sku: string;
@@ -30,12 +33,13 @@ export function mapDbProduct(
     id: product.id,
     slug: product.slug,
     name: product.name,
-    sku: product.sku,
-    size: product.size,
-    diameterCm: product.diameterCm,
-    capacityMl: product.capacityMl,
-    pricePKR: product.pricePKR,
-    priceUSD: product.priceUSD,
+    // Legacy per-size columns; the catalog admin replaces this mapper.
+    sku: product.sku ?? "",
+    size: product.size ?? "",
+    diameterCm: product.diameterCm ?? 0,
+    capacityMl: product.capacityMl ?? 0,
+    pricePKR: product.pricePKR ?? 0,
+    priceUSD: product.priceUSD ?? 0,
     inStock: product.inStock,
     published: product.published,
     sortOrder: product.sortOrder,

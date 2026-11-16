@@ -1,10 +1,7 @@
 import { prisma } from "@/lib/db";
+import { queryStorefrontProducts } from "@/lib/catalog/queries";
 import { mapDbProduct, type Product, type ProductWithId } from "@/lib/product-types";
-import {
-  getAllStaticProductSlugs,
-  getStaticProductBySlug,
-  staticProducts,
-} from "@/lib/products-static";
+import { getStaticProductBySlug, staticProducts } from "@/lib/products-static";
 
 function mapStatic(p: (typeof staticProducts)[number]): Product {
   return {
@@ -45,17 +42,8 @@ export async function getPublishedProducts(): Promise<Product[]> {
   }
 
   try {
-    const rows = await prisma.product.findMany({
-      where: { published: true },
-      include: { images: true },
-      orderBy: [{ sortOrder: "asc" }, { diameterCm: "asc" }],
-    });
-
-    if (rows.length === 0) {
-      return staticProducts.map(mapStatic);
-    }
-
-    return rows.map(mapDbProduct);
+    const products = await queryStorefrontProducts();
+    return products.length > 0 ? products : staticProducts.map(mapStatic);
   } catch {
     return staticProducts.map(mapStatic);
   }
@@ -83,27 +71,10 @@ export async function getAllProductsAdmin(): Promise<ProductWithId[]> {
 }
 
 export async function getProductBySlug(slug: string): Promise<Product | undefined> {
-  if (!process.env.DATABASE_URL) {
-    const p = getStaticProductBySlug(slug);
-    return p ? mapStatic(p) : undefined;
-  }
-
-  try {
-    const row = await prisma.product.findFirst({
-      where: { slug, published: true },
-      include: { images: true },
-    });
-
-    if (!row) {
-      const fallback = getStaticProductBySlug(slug);
-      return fallback ? mapStatic(fallback) : undefined;
-    }
-
-    return mapDbProduct(row);
-  } catch {
-    const fallback = getStaticProductBySlug(slug);
-    return fallback ? mapStatic(fallback) : undefined;
-  }
+  // The catalog is small; resolving from the flattened list keeps variant
+  // slugs and legacy per-size slugs on one code path.
+  const products = await getPublishedProducts();
+  return products.find((p) => p.slug === slug);
 }
 
 export async function getProductByIdAdmin(id: string): Promise<ProductWithId | null> {
@@ -134,22 +105,5 @@ export async function getProductByIdAdmin(id: string): Promise<ProductWithId | n
 }
 
 export async function getAllProductSlugs(): Promise<string[]> {
-  if (!process.env.DATABASE_URL) {
-    return getAllStaticProductSlugs();
-  }
-
-  try {
-    const rows = await prisma.product.findMany({
-      where: { published: true },
-      select: { slug: true },
-    });
-
-    if (rows.length === 0) {
-      return getAllStaticProductSlugs();
-    }
-
-    return rows.map((r) => r.slug);
-  } catch {
-    return getAllStaticProductSlugs();
-  }
+  return (await getPublishedProducts()).map((p) => p.slug);
 }

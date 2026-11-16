@@ -7,28 +7,164 @@ datasource db {
   provider = "postgresql"
 }
 
+enum ProductStatus {
+  DRAFT
+  ACTIVE
+  ARCHIVED
+}
+
+enum ProductKind {
+  STANDARD
+  BUNDLE
+}
+
+enum AttributeType {
+  TEXT
+  NUMBER
+  SELECT
+  BOOLEAN
+}
+
+enum AttributeScope {
+  PRODUCT
+  VARIANT
+}
+
+model Category {
+  id             String              @id @default(cuid())
+  slug           String              @unique
+  name           String
+  description    String?
+  imageUrl       String?
+  parentId       String?
+  parent         Category?           @relation("CategoryTree", fields: [parentId], references: [id], onDelete: SetNull)
+  children       Category[]          @relation("CategoryTree")
+  sortOrder      Int                 @default(0)
+  published      Boolean             @default(true)
+  seoTitle       String?
+  seoDescription String?
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+  attributes     CategoryAttribute[]
+  products       Product[]
+}
+
+// Spec fields for a product type (e.g. diameter for mortars). Child
+// categories inherit their ancestors' attributes.
+model CategoryAttribute {
+  id         String         @id @default(cuid())
+  categoryId String
+  category   Category       @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  key        String
+  label      String
+  type       AttributeType  @default(TEXT)
+  unit       String?
+  options    String[]
+  scope      AttributeScope @default(PRODUCT)
+  required   Boolean        @default(false)
+  sortOrder  Int            @default(0)
+
+  @@unique([categoryId, key])
+}
+
 model Product {
-  id               String         @id @default(cuid())
-  slug             String         @unique
+  id               String           @id @default(cuid())
+  slug             String           @unique
   name             String
-  sku              String         @unique
-  size             String
-  diameterCm       Float
-  capacityMl       Int
-  pricePKR         Int
-  priceUSD         Int
-  inStock          Boolean        @default(true)
-  published        Boolean        @default(true)
+  subtitle         String?
+  kind             ProductKind      @default(STANDARD)
+  status           ProductStatus    @default(ACTIVE)
+  categoryId       String?
+  category         Category?        @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   description      String
   features         String[]
-  specs            Json
   careInstructions String[]
   deliveryInfo     String
-  sortOrder        Int            @default(0)
-  createdAt        DateTime       @default(now())
-  updatedAt        DateTime       @updatedAt
+  specs            Json
+  attributes       Json             @default("{}")
+  tags             String[]
+  featured         Boolean          @default(false)
+  sortOrder        Int              @default(0)
+  seoTitle         String?
+  seoDescription   String?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
   images           ProductImage[]
+  options          ProductOption[]
+  variants         ProductVariant[]
   orderItems       OrderItem[]
+
+  // Legacy per-size columns, kept nullable while the previous deployment still
+  // reads them. Dropped in a later contract migration.
+  sku        String? @unique
+  size       String?
+  diameterCm Float?
+  capacityMl Int?
+  pricePKR   Int?
+  priceUSD   Int?
+  inStock    Boolean @default(true)
+  published  Boolean @default(true)
+}
+
+model ProductOption {
+  id        String               @id @default(cuid())
+  productId String
+  product   Product              @relation(fields: [productId], references: [id], onDelete: Cascade)
+  name      String
+  position  Int                  @default(0)
+  values    ProductOptionValue[]
+
+  @@unique([productId, name])
+}
+
+model ProductOptionValue {
+  id       String               @id @default(cuid())
+  optionId String
+  option   ProductOption        @relation(fields: [optionId], references: [id], onDelete: Cascade)
+  value    String
+  slug     String
+  position Int                  @default(0)
+  variants VariantOptionValue[]
+
+  @@unique([optionId, slug])
+}
+
+model ProductVariant {
+  id                String               @id @default(cuid())
+  productId         String
+  product           Product              @relation(fields: [productId], references: [id], onDelete: Cascade)
+  sku               String               @unique
+  title             String
+  pricePKR          Int
+  priceUSD          Int
+  compareAtPKR      Int?
+  compareAtUSD      Int?
+  costPKR           Int?
+  trackInventory    Boolean              @default(false)
+  stockQty          Int                  @default(0)
+  lowStockThreshold Int                  @default(5)
+  weightGrams       Int?
+  attributes        Json                 @default("{}")
+  legacySlug        String?              @unique
+  position          Int                  @default(0)
+  active            Boolean              @default(true)
+  isDefault         Boolean              @default(false)
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
+  optionValues      VariantOptionValue[]
+  images            ProductImage[]
+  orderItems        OrderItem[]
+
+  @@index([productId, position])
+}
+
+model VariantOptionValue {
+  variantId     String
+  variant       ProductVariant     @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  optionValueId String
+  optionValue   ProductOptionValue @relation(fields: [optionValueId], references: [id], onDelete: Cascade)
+
+  @@id([variantId, optionValueId])
 }
 
 enum OrderStatus {
@@ -84,11 +220,13 @@ model Order {
 }
 
 model OrderItem {
-  id          String   @id @default(cuid())
+  id          String          @id @default(cuid())
   orderId     String
-  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  order       Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
   productId   String?
-  product     Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+  product     Product?        @relation(fields: [productId], references: [id], onDelete: SetNull)
+  variantId   String?
+  variant     ProductVariant? @relation(fields: [variantId], references: [id], onDelete: SetNull)
   productName String
   sku         String
   size        String
@@ -97,12 +235,14 @@ model OrderItem {
 }
 
 model ProductImage {
-  id        String  @id @default(cuid())
+  id        String          @id @default(cuid())
   productId String
-  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  product   Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
+  variantId String?
+  variant   ProductVariant? @relation(fields: [variantId], references: [id], onDelete: SetNull)
   url       String
   alt       String
-  sortOrder Int     @default(0)
+  sortOrder Int             @default(0)
 }
 
 enum ActivityAction {

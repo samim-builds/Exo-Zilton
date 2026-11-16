@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { queryStorefrontProducts } from "@/lib/catalog/queries";
 import { isDomestic, orderRequestSchema } from "@/lib/order-schema";
 import { sendOrderEmails } from "@/lib/order-emails";
 
@@ -24,9 +25,9 @@ export async function POST(request: Request) {
   }
 
   try {
-    const products = await prisma.product.findMany({
-      where: { slug: { in: [...quantities.keys()] }, published: true },
-    });
+    // Cart lines carry storefront slugs (one per variant); price them from the catalog.
+    const catalog = await queryStorefrontProducts();
+    const products = catalog.filter((p) => quantities.has(p.slug));
 
     const unavailable = [...quantities.keys()].filter(
       (slug) => !products.some((p) => p.slug === slug && p.inStock),
@@ -41,7 +42,8 @@ export async function POST(request: Request) {
     const domestic = isDomestic(data.country);
     const currency = domestic ? "PKR" : "USD";
     const items = products.map((p) => ({
-      productId: p.id,
+      productId: p.productId ?? null,
+      variantId: p.variantId ?? null,
       productName: p.name,
       sku: p.sku,
       size: p.size,
