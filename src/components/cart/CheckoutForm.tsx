@@ -7,12 +7,14 @@ import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { track } from "@vercel/analytics";
 import { useCart } from "./CartProvider";
+import { Button, buttonVariants } from "@/components/site/Button";
+import { controlClass } from "@/components/site/Field";
 import { countries } from "@/lib/inquiry-schema";
 import { checkoutSchema, formatMoney, isDomestic, type CheckoutFormData } from "@/lib/order-schema";
 
-const inputClass =
-  "w-full border border-hairline bg-white px-4 py-3 font-sans text-sm text-navy focus:border-navy focus:outline-none";
-const labelClass = "mb-2 block font-sans text-[11px] uppercase tracking-[0.16em] text-navy";
+const inputClass = controlClass;
+const labelClass = "mb-1.5 block text-sm font-medium text-ink";
+const legendClass = "mb-5 font-display text-2xl text-ink";
 
 type Quote = {
   totals: { subtotal: number; discountAmount: number; shipping: number; voucherAmount: number; total: number };
@@ -22,7 +24,11 @@ type Quote = {
 };
 
 function FieldError({ message }: { message?: string }) {
-  return message ? <p className="mt-1 font-sans text-xs text-red-700">{message}</p> : null;
+  return message ? (
+    <p className="mt-1.5 text-xs text-red-700" role="alert">
+      {message}
+    </p>
+  ) : null;
 }
 
 export function CheckoutForm() {
@@ -112,12 +118,12 @@ export function CheckoutForm() {
 
   if (ready && items.length === 0) {
     return (
-      <p className="font-sans text-[15px] text-muted">
-        Your cart is empty.{" "}
-        <Link href="/products" className="text-navy underline underline-offset-4">
-          Browse the collection
+      <div className="max-w-md py-6">
+        <p className="text-lg text-ink">Your cart is empty.</p>
+        <Link href="/products" className={buttonVariants({ size: "lg", className: "mt-6" })}>
+          Shop all sizes
         </Link>
-      </p>
+      </div>
     );
   }
 
@@ -153,72 +159,85 @@ export function CheckoutForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="grid gap-10 lg:grid-cols-[1.618fr_1fr]">
-      <div className="space-y-5">
-        <div className="grid gap-5 sm:grid-cols-2">
-          <div>
-            <label htmlFor="name" className={labelClass}>Full name</label>
-            <input id="name" autoComplete="name" {...register("name")} className={inputClass} />
-            <FieldError message={errors.name?.message} />
+    <form onSubmit={handleSubmit(onSubmit)} noValidate className="grid gap-10 lg:grid-cols-12 lg:gap-14">
+      <div className="space-y-12 lg:col-span-7">
+        <fieldset className="space-y-5">
+          <legend className={legendClass}>Contact</legend>
+          <div className="grid gap-5 sm:grid-cols-2">
+            <div>
+              <label htmlFor="name" className={labelClass}>Full name</label>
+              <input id="name" autoComplete="name" {...register("name")} aria-invalid={errors.name ? true : undefined} className={inputClass} />
+              <FieldError message={errors.name?.message} />
+            </div>
+            <div>
+              <label htmlFor="phone" className={labelClass}>Phone or WhatsApp number</label>
+              <input id="phone" type="tel" autoComplete="tel" {...register("phone")} aria-invalid={errors.phone ? true : undefined} className={inputClass} />
+              <FieldError message={errors.phone?.message} />
+            </div>
           </div>
           <div>
-            <label htmlFor="phone" className={labelClass}>Phone / WhatsApp</label>
-            <input id="phone" type="tel" autoComplete="tel" {...register("phone")} className={inputClass} />
-            <FieldError message={errors.phone?.message} />
+            <label htmlFor="email" className={labelClass}>Email</label>
+            <input id="email" type="email" autoComplete="email" {...register("email")} aria-invalid={errors.email ? true : undefined} className={inputClass} />
+            <FieldError message={errors.email?.message} />
           </div>
-        </div>
-        <div>
-          <label htmlFor="email" className={labelClass}>Email</label>
-          <input id="email" type="email" autoComplete="email" {...register("email")} className={inputClass} />
-          <FieldError message={errors.email?.message} />
-        </div>
-        <div>
-          <label htmlFor="country" className={labelClass}>Country</label>
-          <select id="country" autoComplete="country-name" {...register("country", { onChange: onCountryChange })} className={inputClass}>
-            {countries.map((c) => (
-              <option key={c} value={c}>{c}</option>
-            ))}
-          </select>
-          <FieldError message={errors.country?.message} />
-        </div>
-        <div>
-          <label htmlFor="addressLine" className={labelClass}>Address</label>
-          <input id="addressLine" autoComplete="street-address" {...register("addressLine")} className={inputClass} />
-          <FieldError message={errors.addressLine?.message} />
-        </div>
-        <div className="grid gap-5 sm:grid-cols-2">
+        </fieldset>
+        <fieldset className="space-y-5">
+          <legend className={legendClass}>Delivery</legend>
           <div>
-            <label htmlFor="city" className={labelClass}>City</label>
-            <input id="city" autoComplete="address-level2" {...register("city")} className={inputClass} />
-            <FieldError message={errors.city?.message} />
+            <label htmlFor="country" className={labelClass}>Country</label>
+            <select id="country" autoComplete="country-name" {...register("country", { onChange: onCountryChange })} className={inputClass}>
+              {countries.map((c) => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
+            <FieldError message={errors.country?.message} />
           </div>
           <div>
-            <label htmlFor="postalCode" className={labelClass}>Postal code (optional)</label>
-            <input id="postalCode" autoComplete="postal-code" {...register("postalCode")} className={inputClass} />
+            <label htmlFor="addressLine" className={labelClass}>Address</label>
+            <input id="addressLine" autoComplete="street-address" {...register("addressLine")} aria-invalid={errors.addressLine ? true : undefined} className={inputClass} />
+            <FieldError message={errors.addressLine?.message} />
           </div>
-        </div>
-        <div>
-          <label htmlFor="notes" className={labelClass}>Order notes (optional)</label>
-          <textarea id="notes" rows={3} {...register("notes")} className={inputClass} />
-        </div>
+          <div className="grid gap-5 sm:grid-cols-2">
+            <div>
+              <label htmlFor="city" className={labelClass}>City</label>
+              <input id="city" autoComplete="address-level2" {...register("city")} aria-invalid={errors.city ? true : undefined} className={inputClass} />
+              <FieldError message={errors.city?.message} />
+            </div>
+            <div>
+              <label htmlFor="postalCode" className={labelClass}>
+                Postal code <span className="font-normal text-stone">(optional)</span>
+              </label>
+              <input id="postalCode" autoComplete="postal-code" {...register("postalCode")} className={inputClass} />
+            </div>
+          </div>
+          <div>
+            <label htmlFor="notes" className={labelClass}>
+              Order notes <span className="font-normal text-stone">(optional)</span>
+            </label>
+            <textarea id="notes" rows={3} {...register("notes")} className={inputClass} />
+          </div>
+        </fieldset>
       </div>
 
-      <aside className="h-fit border border-hairline bg-white p-6">
-        <p className="font-sans text-[11px] uppercase tracking-[0.2em] text-bronze">Your order</p>
-        <ul className="mt-4 space-y-3">
+      <aside className="h-fit rounded-[6px] bg-glaze/50 p-6 sm:p-8 lg:sticky lg:top-24 lg:col-span-5" aria-labelledby="checkout-summary">
+        <h2 id="checkout-summary" className="text-2xl text-ink">
+          Your order
+        </h2>
+        <ul className="mt-5 space-y-3">
           {items.map((i) => (
-            <li key={i.key} className="flex justify-between gap-4 font-sans text-[14px] text-charcoal">
+            <li key={i.key} className="flex justify-between gap-4 text-[0.9375rem] text-ink">
               <span>
-                {i.quantity} × {i.name}
-                {i.variantTitle && ` — ${i.variantTitle}`}
+                {i.name}
+                {i.variantTitle && <span className="text-stone">, {i.variantTitle}</span>}
+                {i.quantity > 1 && <span className="tabular text-stone"> × {i.quantity}</span>}
               </span>
-              <span className="shrink-0">
+              <span className="tabular shrink-0">
                 {formatMoney((domestic ? i.pricePKR : i.priceUSD) * i.quantity, currency)}
               </span>
             </li>
           ))}
         </ul>
-        <div className="mt-4 border-t border-hairline pt-4">
+        <div className="mt-5 border-t border-ink/10 pt-5">
           <label htmlFor="code" className={labelClass}>Discount or gift voucher code</label>
           <div className="flex gap-2">
             <input
@@ -232,28 +251,23 @@ export function CheckoutForm() {
                 }
               }}
               autoComplete="off"
-              className={`${inputClass} uppercase`}
+              className={`${inputClass} py-2 uppercase`}
             />
-            <button
-              type="button"
-              onClick={applyCode}
-              disabled={applying || !codeInput.trim()}
-              className="shrink-0 border border-navy px-4 font-sans text-[11px] uppercase tracking-[0.16em] text-navy transition-colors hover:border-bronze hover:text-bronze disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {applying ? "Checking…" : "Apply"}
-            </button>
+            <Button type="button" variant="secondary" onClick={applyCode} loading={applying} disabled={!codeInput.trim()}>
+              Apply
+            </Button>
           </div>
           <FieldError message={codeError} />
         </div>
-        <div className="mt-4 space-y-2 border-t border-hairline pt-4 font-sans text-[14px] text-charcoal">
+        <div className="tabular mt-5 space-y-2.5 border-t border-ink/10 pt-5 text-[0.9375rem] text-ink">
           {quote?.discount && (
-            <div className="flex justify-between gap-4 text-bronze">
+            <div className="flex justify-between gap-4 text-emerald-800">
               <span>
                 {quote.discount.code}
                 <button
                   type="button"
                   onClick={() => removeCode("discount")}
-                  className="ml-2 text-[12px] text-muted underline underline-offset-4"
+                  className="ml-2 text-xs text-stone underline underline-offset-4 hover:text-ink"
                 >
                   Remove
                 </button>
@@ -264,17 +278,17 @@ export function CheckoutForm() {
             </div>
           )}
           <div className="flex justify-between">
-            <span>Delivery</span>
+            <span className="text-stone">Delivery</span>
             <span>{domestic ? "Free" : "Quoted after order"}</span>
           </div>
           {quote?.voucher && (
-            <div className="flex justify-between gap-4 text-bronze">
+            <div className="flex justify-between gap-4 text-emerald-800">
               <span>
                 Gift voucher {quote.voucher.code}
                 <button
                   type="button"
                   onClick={() => removeCode("voucher")}
-                  className="ml-2 text-[12px] text-muted underline underline-offset-4"
+                  className="ml-2 text-xs text-stone underline underline-offset-4 hover:text-ink"
                 >
                   Remove
                 </button>
@@ -282,29 +296,29 @@ export function CheckoutForm() {
               <span>-{formatMoney(quote.totals.voucherAmount, currency)}</span>
             </div>
           )}
-          <div className="flex justify-between text-[16px] text-navy">
+          <div className="flex justify-between border-t border-ink/10 pt-3 text-lg font-medium text-ink">
             <span>Total</span>
             <span>{formatMoney(total, currency)}</span>
           </div>
           {quote?.voucher && quote.voucher.remaining > 0 && (
-            <p className="text-[12px] text-muted">
+            <p className="text-xs text-stone">
               {formatMoney(quote.voucher.remaining, currency)} will stay on your gift voucher.
             </p>
           )}
         </div>
-        <p className="mt-4 font-sans text-[13px] leading-[1.7] text-muted">
+        <p className="mt-5 text-sm text-stone">
           {domestic
             ? "Pay cash on delivery. We'll confirm your order by phone or WhatsApp before dispatch."
             : "No payment now. We'll email a shipping quote and secure payment link within one business day."}
         </p>
-        {error && <p className="mt-4 font-sans text-sm text-red-700">{error}</p>}
-        <button
-          type="submit"
-          disabled={submitting || !ready}
-          className="mt-6 inline-flex w-full justify-center border border-navy bg-navy px-6 py-4 font-sans text-[11px] uppercase tracking-[0.16em] text-white transition-colors hover:border-bronze hover:bg-bronze disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          {submitting ? "Placing order…" : domestic ? "Place order — cash on delivery" : "Place order"}
-        </button>
+        {error && (
+          <p className="mt-4 rounded-[6px] bg-red-50 px-3 py-2 text-sm text-red-800" role="alert">
+            {error}
+          </p>
+        )}
+        <Button type="submit" size="lg" className="mt-6 w-full" loading={submitting} disabled={!ready}>
+          {domestic ? "Place order, pay on delivery" : "Place order"}
+        </Button>
       </aside>
     </form>
   );

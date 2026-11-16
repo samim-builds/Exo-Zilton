@@ -47,8 +47,9 @@ export function VariantSelector({ product, current }: VariantSelectorProps) {
                   <>
                     <span className={cn("text-[0.9375rem] font-medium text-ink", soldOut && "line-through decoration-stone/60")}>{value.value}</span>
                     {sample && sample.diameterCm > 0 && (
-                      <span className="tabular mt-0.5 text-xs text-stone">
-                        {sample.diameterCm} cm{sample.capacityMl > 0 && ` · ${sample.capacityMl} ml`}
+                      <span className="tabular mt-0.5 flex flex-col text-xs leading-snug text-stone">
+                        <span>{sample.diameterCm} cm</span>
+                        {sample.capacityMl > 0 && <span>{sample.capacityMl} ml</span>}
                       </span>
                     )}
                     {soldOut && <span className="sr-only">(out of stock)</span>}

@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { InquiryForm } from "@/components/shared/InquiryForm";
 import { SectionHeading } from "@/components/shared/SectionHeading";
+import { buttonVariants } from "@/components/site/Button";
+import { WhatsAppIcon } from "@/components/site/WhatsAppIcon";
 import { siteConfig } from "@/lib/site";
 import { buildGeneralWhatsAppUrl } from "@/lib/whatsapp";
 import { buildMetadata } from "@/lib/seo";
@@ -14,53 +16,38 @@ export const metadata: Metadata = buildMetadata({
 
 export default function ContactPage() {
   return (
-    <div className="py-12 sm:py-16">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <div className="pt-14 pb-20 sm:pt-20 sm:pb-28">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
         <SectionHeading
-          align="left"
-          eyebrow="Get in Touch"
-          title="Contact Exo Zilton"
-          description="Whether you're ordering for your kitchen in Pakistan or inquiring about international delivery, we're here to help."
+          as="h1"
+          title="Contact us"
+          description="Ordering for a kitchen in Pakistan or asking about delivery abroad, we reply to every message."
         />
 
-        <div className="mt-12 grid gap-12 lg:grid-cols-2">
-          <div>
-            <div className="space-y-6 rounded-lg border border-cream bg-cream/30 p-8">
-              <div>
-                <h2 className="font-serif text-xl font-semibold text-navy">WhatsApp Orders</h2>
-                <p className="mt-2 text-sm text-charcoal/80">
-                  The fastest way to place an order. Message us with your preferred size and
-                  delivery country.
-                </p>
-                <a
-                  href={buildGeneralWhatsAppUrl()}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="mt-4 inline-flex rounded-full bg-[#25D366] px-6 py-3 text-sm font-medium text-white transition-opacity hover:opacity-90"
-                >
-                  Chat on WhatsApp
-                </a>
-              </div>
-
-              <div>
-                <h2 className="font-serif text-xl font-semibold text-navy">Email</h2>
-                <a
-                  href={`mailto:${siteConfig.contactEmail}`}
-                  className="mt-2 block text-sm text-navy hover:underline"
-                >
-                  {siteConfig.contactEmail}
-                </a>
-              </div>
-
-              <div>
-                <h2 className="font-serif text-xl font-semibold text-navy">Location</h2>
-                <p className="mt-2 text-sm text-charcoal/80">{siteConfig.location}</p>
-              </div>
+        <div className="mt-14 grid gap-14 lg:grid-cols-12">
+          <div className="space-y-10 lg:col-span-4">
+            <div>
+              <h2 className="font-sans text-sm font-medium text-stone">WhatsApp</h2>
+              <p className="mt-2 text-ink">The quickest way to order. Send the size you want and your delivery country.</p>
+              <a href={buildGeneralWhatsAppUrl()} target="_blank" rel="noopener noreferrer" className={buttonVariants({ variant: "secondary", className: "mt-4" })}>
+                <WhatsAppIcon />
+                Chat on WhatsApp
+              </a>
+            </div>
+            <div>
+              <h2 className="font-sans text-sm font-medium text-stone">Email</h2>
+              <a href={`mailto:${siteConfig.contactEmail}`} className="mt-2 inline-block text-ink underline decoration-ink/30 underline-offset-4 hover:decoration-bronze">
+                {siteConfig.contactEmail}
+              </a>
+            </div>
+            <div>
+              <h2 className="font-sans text-sm font-medium text-stone">Based in</h2>
+              <p className="mt-2 text-ink">{siteConfig.location}</p>
             </div>
           </div>
 
-          <div className="rounded-lg border border-cream p-8">
-            <h2 className="mb-6 font-serif text-xl font-semibold text-navy">Send an Inquiry</h2>
+          <div className="lg:col-span-7 lg:col-start-6">
+            <h2 className="mb-6 text-2xl text-ink">Send a message</h2>
             <InquiryForm />
           </div>
         </div>

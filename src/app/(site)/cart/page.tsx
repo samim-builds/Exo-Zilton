@@ -9,9 +9,9 @@ export const metadata: Metadata = {
 
 export default function CartPage() {
   return (
-    <div className="py-12 sm:py-16">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <SectionHeading align="left" eyebrow="Your Selection" title="Cart" />
+    <div className="pt-14 pb-20 sm:pt-20 sm:pb-28">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+        <SectionHeading as="h1" title="Cart" />
         <div className="mt-10">
           <CartView />
         </div>
