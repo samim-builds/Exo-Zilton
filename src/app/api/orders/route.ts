@@ -60,15 +60,16 @@ export async function POST(request: Request) {
     const { items } = priced;
     const email = data.email.toLowerCase();
 
-    const customer = await prisma.customer.upsert({
-      where: { email },
-      update: { name: data.name, phone: data.phone },
-      create: { email, name: data.name, phone: data.phone },
-    });
-
     // Codes are re-validated and claimed in the same transaction as the order,
     // so a code used up between the cart preview and now can't be redeemed twice.
     const order = await prisma.$transaction(async (tx) => {
+      // Anyone can type any email at checkout, so an existing customer record is
+      // never overwritten from here; each order keeps the details it was placed with.
+      const customer = await tx.customer.upsert({
+        where: { email },
+        update: {},
+        create: { email, name: data.name, phone: data.phone },
+      });
       const quote = await quoteOrder(tx, {
         items,
         currency,

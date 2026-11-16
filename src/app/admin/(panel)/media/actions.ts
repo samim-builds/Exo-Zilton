@@ -1,5 +1,6 @@
 "use server";
 
+import { CATALOG_TAG } from "@/lib/products-server";
 import { z } from "zod";
 import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/db";
@@ -63,7 +64,7 @@ export const updateMedia = adminAction(
     await logActivity({ entityType: "media", entityId: id, action: "UPDATE", summary: `Updated media details` });
     return asset;
   },
-  { tags: ["products"] },
+  { tags: [CATALOG_TAG] },
 );
 
 export const getMediaUsage = adminAction(z.object({ id: z.string().min(1) }), async ({ id }) => {

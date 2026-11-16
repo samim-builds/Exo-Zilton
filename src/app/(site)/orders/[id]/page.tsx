@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { maskEmail } from "@/lib/format";
 import { CheckCircle2 } from "lucide-react";
 import { buttonVariants } from "@/components/site/Button";
 import { WhatsAppIcon } from "@/components/site/WhatsAppIcon";
@@ -45,7 +46,7 @@ export default async function OrderConfirmationPage({ params }: PageProps) {
             : "We've received your order and will email you within one business day with a shipping quote and secure payment link."}
         </p>
         <p className="mt-3 text-sm text-stone">
-          Order number <span className="tabular font-medium text-ink">{order.number}</span>. A confirmation is on its way to {order.email}.
+          Order number <span className="tabular font-medium text-ink">{order.number}</span>. A confirmation is on its way to {maskEmail(order.email)}.
         </p>
 
         <div className="tabular mt-10 rounded-[6px] bg-glaze/50 p-6 sm:p-8">

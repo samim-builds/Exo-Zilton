@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { adjustmentDelta, isLowStock, stockMovementsForTransition, stockShortfalls } from "./inventory";
+import { adjustmentDelta, isLowStock, reinstateBlockedReason, returnRecordedStock, stockMovementsForTransition, stockShortfalls } from "./inventory";
 
 const lines = [
   { variantId: "v1", quantity: 2 },
@@ -77,5 +77,46 @@ describe("isLowStock", () => {
     expect(isLowStock({ trackInventory: true, stockQty: 5, lowStockThreshold: 5 })).toBe(true);
     expect(isLowStock({ trackInventory: true, stockQty: 6, lowStockThreshold: 5 })).toBe(false);
     expect(isLowStock({ trackInventory: false, stockQty: 0, lowStockThreshold: 5 })).toBe(false);
+  });
+});
+
+describe("returnRecordedStock", () => {
+  it("gives back exactly what the order took, per variant", () => {
+    expect(
+      returnRecordedStock([
+        { variantId: "a", delta: -2 },
+        { variantId: "b", delta: -1 },
+      ]),
+    ).toEqual([
+      { variantId: "a", delta: 2, reason: "CANCEL" },
+      { variantId: "b", delta: 1, reason: "CANCEL" },
+    ]);
+  });
+
+  it("nets earlier take-and-return cycles so a re-confirmed order returns once", () => {
+    expect(
+      returnRecordedStock([
+        { variantId: "a", delta: -2 },
+        { variantId: "a", delta: 2 },
+        { variantId: "a", delta: -2 },
+      ]),
+    ).toEqual([{ variantId: "a", delta: 2, reason: "CANCEL" }]);
+  });
+
+  it("returns nothing when the order took nothing (variant was untracked at confirmation)", () => {
+    expect(returnRecordedStock([])).toEqual([]);
+    expect(returnRecordedStock([{ variantId: "a", delta: -1 }, { variantId: "a", delta: 1 }])).toEqual([]);
+  });
+});
+
+describe("reinstateBlockedReason", () => {
+  it("blocks reopening a cancelled order that was paid partly by gift voucher", () => {
+    expect(reinstateBlockedReason("CANCELLED", "CONFIRMED", { voucherAmount: 500 })).toMatch(/voucher/);
+  });
+
+  it("allows reopening an order without a voucher, and every other change", () => {
+    expect(reinstateBlockedReason("CANCELLED", "PENDING", { voucherAmount: 0 })).toBeNull();
+    expect(reinstateBlockedReason("PENDING", "CANCELLED", { voucherAmount: 500 })).toBeNull();
+    expect(reinstateBlockedReason("CANCELLED", "CANCELLED", { voucherAmount: 500 })).toBeNull();
   });
 });

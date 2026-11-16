@@ -148,7 +148,11 @@ export function normalizeCode(code: string): string {
 // No 0/O, 1/I/L, so codes survive being read aloud or copied by hand.
 const CODE_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
 
-export function generateCode(prefix: string, groups: number[], random: () => number = Math.random): string {
+// Cryptographic randomness: codes are bearer credentials, and Math.random's
+// state can be inferred from codes a visitor has seen.
+const secureRandom = () => crypto.getRandomValues(new Uint32Array(1))[0] / 2 ** 32;
+
+export function generateCode(prefix: string, groups: number[], random: () => number = secureRandom): string {
   const group = (length: number) =>
     Array.from({ length }, () => CODE_ALPHABET[Math.floor(random() * CODE_ALPHABET.length)]).join("");
   return [prefix, ...groups.map(group)].join("-");

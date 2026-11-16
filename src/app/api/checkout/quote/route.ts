@@ -35,10 +35,17 @@ export async function POST(request: Request) {
 
   let { discountCode, voucherCode } = data;
   let applied: "discount" | "voucher" | null = null;
-  if (data.code) {
+  // Every code field counts toward the limit, not just the "apply" field, so the
+  // others can't be used to test whether codes exist.
+  if (data.code || discountCode || voucherCode) {
     if (await isRateLimited(limitKey, MAX_UNKNOWN_CODES)) {
       return NextResponse.json({ error: "Too many attempts. Please try again in a few minutes." }, { status: 429 });
     }
+  }
+  for (const existing of [discountCode, voucherCode]) {
+    if (existing && !(await identifyCode(prisma, existing))) await recordAttempt(limitKey, false);
+  }
+  if (data.code) {
     applied = await identifyCode(prisma, data.code);
     if (!applied) {
       await recordAttempt(limitKey, false);

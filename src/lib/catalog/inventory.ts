@@ -57,3 +57,25 @@ export function adjustmentDelta(adjustment: StockAdjustment, current: number): n
 export function isLowStock(v: { trackInventory: boolean; stockQty: number; lowStockThreshold: number }): boolean {
   return v.trackInventory && v.stockQty <= v.lowStockThreshold;
 }
+
+/**
+ * Stock to give back when an order leaves a committed status: the reverse of
+ * what its recorded movements took, so a later change to a variant's tracking
+ * can't return stock that was never taken (or skip stock that was).
+ */
+export function returnRecordedStock(movements: { variantId: string; delta: number }[]): StockMovement[] {
+  const net = new Map<string, number>();
+  for (const m of movements) net.set(m.variantId, (net.get(m.variantId) ?? 0) + m.delta);
+  return [...net].flatMap(([variantId, delta]) => (delta < 0 ? [{ variantId, delta: -delta, reason: "CANCEL" as const }] : []));
+}
+
+/**
+ * Why a status change can't be made, or null. Cancelling refunds a gift voucher,
+ * so reopening that order would let the customer spend the voucher twice.
+ */
+export function reinstateBlockedReason(from: OrderStatusName, to: OrderStatusName, order: { voucherAmount: number }): string | null {
+  if (from === "CANCELLED" && to !== "CANCELLED" && order.voucherAmount > 0) {
+    return "This order was paid partly by gift voucher, which was refunded when it was cancelled. Place a new order instead of reopening this one.";
+  }
+  return null;
+}
