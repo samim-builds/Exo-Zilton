@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
-import { formatMoney } from "@/lib/order-schema";
+import { formatMoney, orderAdjustments } from "@/lib/order-schema";
 import { buildGeneralWhatsAppUrl } from "@/lib/whatsapp";
 
 export const dynamic = "force-dynamic";
@@ -49,6 +49,12 @@ export default async function OrderConfirmationPage({ params }: PageProps) {
               </li>
             ))}
           </ul>
+          {orderAdjustments(order).map((line) => (
+            <div key={line.label} className="mt-3 flex justify-between gap-4 font-sans text-[14px] text-bronze">
+              <span>{line.label}</span>
+              <span className="shrink-0">-{formatMoney(-line.amount, order.currency)}</span>
+            </div>
+          ))}
           <div className="mt-4 flex justify-between border-t border-hairline pt-4 font-sans text-[16px] text-navy">
             <span>Total</span>
             <span>

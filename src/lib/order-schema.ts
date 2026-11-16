@@ -24,6 +24,8 @@ export const orderRequestSchema = checkoutSchema.extend({
     )
     .min(1, "Your cart is empty")
     .max(20),
+  discountCode: z.string().trim().max(40).optional(),
+  voucherCode: z.string().trim().max(40).optional(),
 });
 
 export type CheckoutFormData = z.infer<typeof checkoutSchema>;
@@ -46,4 +48,14 @@ export function isDomestic(country: string): boolean {
 
 export function formatMoney(amount: number, currency: string): string {
   return currency === "PKR" ? formatPKR(amount) : formatUSD(amount);
+}
+
+type OrderIncentives = { discountCode: string | null; discountAmount: number; voucherCode: string | null; voucherAmount: number };
+
+/** Discount and gift-voucher lines to show between the items and the total. */
+export function orderAdjustments(order: OrderIncentives): { label: string; amount: number }[] {
+  return [
+    ...(order.discountCode && order.discountAmount > 0 ? [{ label: `Discount (${order.discountCode})`, amount: -order.discountAmount }] : []),
+    ...(order.voucherCode && order.voucherAmount > 0 ? [{ label: `Gift voucher (${order.voucherCode})`, amount: -order.voucherAmount }] : []),
+  ];
 }

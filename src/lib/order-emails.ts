@@ -1,6 +1,6 @@
 import type { Order, OrderItem } from "@/generated/prisma/client";
 import { sendEmail } from "./email";
-import { formatMoney } from "./order-schema";
+import { formatMoney, orderAdjustments } from "./order-schema";
 import { siteConfig } from "./site";
 
 type OrderWithItems = Order & { items: OrderItem[] };
@@ -15,6 +15,7 @@ function orderSummary(order: OrderWithItems): string {
     ...lines,
     "",
     `Subtotal: ${formatMoney(order.subtotal, order.currency)}`,
+    ...orderAdjustments(order).map((line) => `${line.label}: -${formatMoney(-line.amount, order.currency)}`),
     order.currency === "PKR"
       ? "Delivery: Free"
       : "Shipping: to be quoted",

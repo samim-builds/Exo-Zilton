@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { isAdminAuthenticated } from "@/lib/session";
-import { formatMoney } from "@/lib/order-schema";
+import { formatMoney, orderAdjustments } from "@/lib/order-schema";
 import { OrderStatusBadge } from "@/components/admin/OrderStatusBadge";
 import { OrderUpdateForm } from "@/components/admin/OrderUpdateForm";
 
@@ -54,6 +54,12 @@ export default async function AdminOrderDetailPage({ params }: PageProps) {
                 </li>
               ))}
             </ul>
+            {orderAdjustments(order).map((line) => (
+              <div key={line.label} className="mt-2 flex justify-between gap-4 text-sm text-emerald-700">
+                <span>{line.label}</span>
+                <span>-{formatMoney(-line.amount, order.currency)}</span>
+              </div>
+            ))}
             <div className="mt-4 flex justify-between border-t border-charcoal/10 pt-4 font-medium text-navy">
               <span>Total</span>
               <span>{formatMoney(order.total, order.currency)}</span>

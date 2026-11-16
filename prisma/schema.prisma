@@ -191,32 +191,42 @@ model Customer {
 }
 
 model Order {
-  id             String        @id @default(cuid())
-  number         Int           @unique @default(autoincrement())
-  customerId     String
-  customer       Customer      @relation(fields: [customerId], references: [id])
-  status         OrderStatus   @default(PENDING)
-  paymentMethod  PaymentMethod
-  paid           Boolean       @default(false)
-  currency       String
-  subtotal       Int
-  shipping       Int           @default(0)
-  total          Int
-  name           String
-  email          String
-  phone          String
-  addressLine    String
-  city           String
-  postalCode     String?
-  country        String
-  notes          String?
-  courier        String?
-  trackingNumber String?
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
-  items          OrderItem[]
+  id                  String               @id @default(cuid())
+  number              Int                  @unique @default(autoincrement())
+  customerId          String
+  customer            Customer             @relation(fields: [customerId], references: [id])
+  status              OrderStatus          @default(PENDING)
+  paymentMethod       PaymentMethod
+  paid                Boolean              @default(false)
+  currency            String
+  subtotal            Int
+  shipping            Int                  @default(0)
+  total               Int
+  name                String
+  email               String
+  phone               String
+  addressLine         String
+  city                String
+  postalCode          String?
+  country             String
+  notes               String?
+  courier             String?
+  trackingNumber      String?
+  // Last 10 digits of phone, for the first-order and per-customer checks.
+  phoneNormalized     String?
+  discountCode        String?
+  discountAmount      Int                  @default(0)
+  voucherCode         String?
+  voucherAmount       Int                  @default(0)
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  items               OrderItem[]
+  discountRedemptions DiscountRedemption[]
+  voucherTransactions VoucherTransaction[]
 
   @@index([status, createdAt])
+  @@index([email])
+  @@index([phoneNormalized])
 }
 
 model OrderItem {
@@ -292,4 +302,115 @@ model LoginAttempt {
   createdAt DateTime @default(now())
 
   @@index([ip, createdAt])
+}
+
+enum DiscountType {
+  PERCENT
+  FIXED
+  FREE_SHIPPING
+}
+
+enum DiscountScope {
+  ALL
+  CATEGORIES
+  PRODUCTS
+}
+
+enum DiscountKind {
+  STANDARD
+  WELCOME
+}
+
+model Discount {
+  id               String               @id @default(cuid())
+  code             String               @unique
+  title            String
+  type             DiscountType
+  percentOff       Int?
+  valuePKR         Int?
+  valueUSD         Int?
+  minSubtotalPKR   Int?
+  minSubtotalUSD   Int?
+  maxDiscountPKR   Int?
+  maxDiscountUSD   Int?
+  appliesTo        DiscountScope        @default(ALL)
+  categoryIds      String[]
+  productIds       String[]
+  startsAt         DateTime?
+  endsAt           DateTime?
+  usageLimit       Int?
+  // Redemptions so far; incremented atomically when an order uses the code.
+  usedCount        Int                  @default(0)
+  perCustomerLimit Int?
+  firstOrderOnly   Boolean              @default(false)
+  // Whether a gift voucher can be used on the same order.
+  combinable       Boolean              @default(true)
+  active           Boolean              @default(true)
+  kind             DiscountKind         @default(STANDARD)
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
+  redemptions      DiscountRedemption[]
+
+  @@index([kind, active])
+}
+
+model DiscountRedemption {
+  id            String   @id @default(cuid())
+  discountId    String
+  discount      Discount @relation(fields: [discountId], references: [id], onDelete: Cascade)
+  orderId       String
+  order         Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  customerEmail String
+  customerPhone String
+  amount        Int
+  currency      String
+  createdAt     DateTime @default(now())
+
+  @@unique([discountId, orderId])
+  @@index([discountId, customerEmail])
+  @@index([discountId, customerPhone])
+}
+
+enum VoucherReason {
+  PURCHASE
+  GIFT
+  REFUND
+  PROMO
+}
+
+enum VoucherTransactionReason {
+  ISSUE
+  REDEEM
+  REFUND
+  ADJUST
+}
+
+model GiftVoucher {
+  id             String               @id @default(cuid())
+  code           String               @unique
+  currency       String
+  initialBalance Int
+  balance        Int
+  expiresAt      DateTime?
+  recipientEmail String?
+  note           String?
+  issuedReason   VoucherReason        @default(GIFT)
+  active         Boolean              @default(true)
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+  transactions   VoucherTransaction[]
+}
+
+model VoucherTransaction {
+  id        String                   @id @default(cuid())
+  voucherId String
+  voucher   GiftVoucher              @relation(fields: [voucherId], references: [id], onDelete: Cascade)
+  orderId   String?
+  order     Order?                   @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  delta     Int
+  reason    VoucherTransactionReason
+  note      String?
+  createdAt DateTime                 @default(now())
+
+  @@index([voucherId, createdAt])
 }

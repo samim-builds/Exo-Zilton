@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { orderUpdateSchema } from "@/lib/order-schema";
 import { requireAdmin } from "@/lib/session";
 import { diffFields, logActivity } from "@/lib/admin/activity";
+import { releaseOrderIncentives } from "@/lib/commerce/checkout";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -30,13 +31,20 @@ export async function PATCH(request: Request, context: RouteContext) {
   }
 
   try {
-    const order = await prisma.order.update({
-      where: { id },
-      data: {
-        ...rest,
-        ...(courier !== undefined && { courier: courier || null }),
-        ...(trackingNumber !== undefined && { trackingNumber: trackingNumber || null }),
-      },
+    const order = await prisma.$transaction(async (tx) => {
+      const updated = await tx.order.update({
+        where: { id },
+        data: {
+          ...rest,
+          ...(courier !== undefined && { courier: courier || null }),
+          ...(trackingNumber !== undefined && { trackingNumber: trackingNumber || null }),
+        },
+      });
+      // Cancelling frees the discount use and refunds any gift voucher balance.
+      if (updated.status === "CANCELLED" && before.status !== "CANCELLED") {
+        await releaseOrderIncentives(tx, id);
+      }
+      return updated;
     });
 
     const diff = diffFields(before, {

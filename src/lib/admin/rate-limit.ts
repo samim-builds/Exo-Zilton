@@ -8,34 +8,37 @@ export function getClientIp(request: Request): string {
   return forwarded?.split(",")[0]?.trim() || request.headers.get("x-real-ip") || "unknown";
 }
 
-// Failed logins per IP are counted in the database so the limit holds across
-// serverless instances. Without a database, or if the lookup fails, the limit
-// is skipped rather than locking the admin out; the password check still applies.
-export async function isLoginLocked(ip: string): Promise<boolean> {
+// Failed attempts per key (e.g. an IP) are counted in the database so the
+// limit holds across serverless instances. Without a database, or if the
+// lookup fails, the limit is skipped rather than locking people out.
+export async function isRateLimited(key: string, maxFailures = MAX_FAILURES): Promise<boolean> {
   if (!process.env.DATABASE_URL) return false;
 
   try {
     const failures = await prisma.loginAttempt.count({
-      where: { ip, success: false, createdAt: { gte: new Date(Date.now() - WINDOW_MS) } },
+      where: { ip: key, success: false, createdAt: { gte: new Date(Date.now() - WINDOW_MS) } },
     });
-    return failures >= MAX_FAILURES;
+    return failures >= maxFailures;
   } catch (error) {
-    console.error("Login rate limit check failed", error);
+    console.error("Rate limit check failed", error);
     return false;
   }
 }
 
-export async function recordLoginAttempt(ip: string, success: boolean): Promise<void> {
+export async function recordAttempt(key: string, success: boolean): Promise<void> {
   if (!process.env.DATABASE_URL) return;
 
   try {
     if (success) {
-      // A successful login clears the failure count for this IP.
-      await prisma.loginAttempt.deleteMany({ where: { ip, success: false } });
+      // A success clears the failure count for this key.
+      await prisma.loginAttempt.deleteMany({ where: { ip: key, success: false } });
     } else {
-      await prisma.loginAttempt.create({ data: { ip, success } });
+      await prisma.loginAttempt.create({ data: { ip: key, success } });
     }
   } catch (error) {
-    console.error("Failed to record login attempt", error);
+    console.error("Failed to record attempt", error);
   }
 }
+
+export const isLoginLocked = (ip: string) => isRateLimited(ip);
+export const recordLoginAttempt = (ip: string, success: boolean) => recordAttempt(ip, success);
