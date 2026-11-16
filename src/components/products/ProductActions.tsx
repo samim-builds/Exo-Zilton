@@ -1,14 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { Check, Gift } from "lucide-react";
 import Link from "next/link";
 import { track } from "@vercel/analytics";
 import { useCart } from "@/components/cart/CartProvider";
 import type { CatalogProduct, CatalogVariant } from "@/lib/product-types";
-import { formatDiameter } from "@/lib/format";
+import { formatPKR } from "@/lib/format";
 import { buildWhatsAppUrl } from "@/lib/whatsapp";
 import { InquiryForm } from "@/components/shared/InquiryForm";
 import { WhatsAppIcon } from "@/components/site/WhatsAppIcon";
+import { Button } from "@/components/site/Button";
+import { controlClass } from "@/components/site/Field";
+import { QuantityStepper } from "@/components/site/QuantityStepper";
+import { cn } from "@/lib/utils";
 
 type ProductActionsProps = {
   product: CatalogProduct;
@@ -23,6 +28,18 @@ export function ProductActions({ product, variant, href }: ProductActionsProps) 
   const [country, setCountry] = useState("Pakistan");
   const [added, setAdded] = useState(false);
   const { addItem } = useCart();
+  const buyRef = useRef<HTMLDivElement>(null);
+  const [buyHidden, setBuyHidden] = useState(false);
+
+  // On phones, a bar with the price and Add to cart appears once the buy
+  // buttons have scrolled up out of view.
+  useEffect(() => {
+    const el = buyRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(([entry]) => setBuyHidden(!entry.isIntersecting && entry.boundingClientRect.top < 0));
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
   function handleAddToCart() {
     addItem(
@@ -51,105 +68,78 @@ export function ProductActions({ product, variant, href }: ProductActionsProps) 
 
   return (
     <div className="space-y-6">
-      <p
-        className={`font-sans text-[10px] uppercase tracking-[0.2em] ${
-          variant.inStock ? "text-bronze" : "text-muted"
-        }`}
-      >
-        {variant.inStock ? "In stock" : "Out of stock"}
+      <p className="flex items-center gap-2 text-sm">
+        <span className={cn("size-2 rounded-full", variant.inStock ? "bg-emerald-600" : "bg-stone/50")} aria-hidden />
+        <span className="text-ink">{variant.inStock ? "In stock, ready to ship" : "Out of stock"}</span>
+        <span className="ml-auto text-xs text-stone">SKU {variant.sku}</span>
       </p>
 
-      <p className="font-sans text-[12px] tracking-wide text-muted">
-        {variant.diameterCm > 0 && (
-          <>
-            {formatDiameter(variant.diameterCm)}
-            {variant.capacityMl > 0 && ` · ${variant.capacityMl}ml capacity`}
-            <span className="mx-2 text-hairline">·</span>
-          </>
+      <div ref={buyRef} className="space-y-3">
+        <div className="flex gap-3">
+          <QuantityStepper value={quantity} onChange={setQuantity} />
+          <Button size="lg" className="flex-1" disabled={!variant.inStock} onClick={handleAddToCart}>
+            {variant.inStock ? "Add to cart" : "Out of stock"}
+          </Button>
+        </div>
+        {added && (
+          <p className="flex items-center gap-2 text-sm text-ink" role="status">
+            <Check className="size-4 text-emerald-700" aria-hidden />
+            Added to your cart.
+            <Link href="/cart" className="underline decoration-ink/30 underline-offset-4 hover:decoration-bronze">
+              View cart
+            </Link>
+          </p>
         )}
-        {variant.sku}
-      </p>
-
-      <div className="flex items-center gap-4">
-        <label htmlFor="qty" className="font-sans text-[11px] uppercase tracking-[0.16em] text-navy">
-          Qty
-        </label>
-        <input
-          id="qty"
-          type="number"
-          min={1}
-          max={99}
-          value={quantity}
-          onChange={(e) => setQuantity(Number(e.target.value))}
-          className="w-20 border border-hairline bg-porcelain px-3 py-2 font-sans text-sm text-navy"
-        />
+        <Button asChild variant="secondary" size="lg" className="w-full">
+          <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
+            <WhatsAppIcon />
+            Order on WhatsApp
+          </a>
+        </Button>
       </div>
 
-      <div>
-        <label
-          htmlFor="order-country"
-          className="mb-2 block font-sans text-[11px] uppercase tracking-[0.16em] text-navy"
-        >
-          Delivery country
-        </label>
-        <select
-          id="order-country"
-          value={country}
-          onChange={(e) => setCountry(e.target.value)}
-          className="w-full border border-hairline bg-porcelain px-4 py-3 font-sans text-sm text-navy"
-        >
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-stone">
+        <label htmlFor="order-country">Delivering to</label>
+        <select id="order-country" value={country} onChange={(e) => setCountry(e.target.value)} className={cn(controlClass, "w-auto py-1.5 text-sm")}>
           <option value="Pakistan">Pakistan</option>
           <option value="United Kingdom">United Kingdom</option>
           <option value="United States">United States</option>
           <option value="United Arab Emirates">United Arab Emirates</option>
-          <option value="Other">Other</option>
+          <option value="Other">Another country</option>
         </select>
       </div>
 
-      <div className="flex flex-col gap-3">
-        <button
-          type="button"
-          disabled={!variant.inStock}
-          onClick={handleAddToCart}
-          className="inline-flex w-full items-center justify-center border border-navy bg-navy px-6 py-4 font-sans text-[11px] uppercase tracking-[0.16em] text-white transition-colors hover:border-bronze hover:bg-bronze disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          {added ? "Added to cart" : "Add to cart"}
-        </button>
-        {added && (
-          <Link
-            href="/cart"
-            className="text-center font-sans text-[11px] uppercase tracking-[0.16em] text-bronze underline underline-offset-4"
-          >
-            View cart & checkout
-          </Link>
-        )}
-        <a
-          href={whatsappUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex w-full items-center justify-center gap-3 border border-hairline bg-porcelain px-6 py-4 font-sans text-[11px] uppercase tracking-[0.16em] text-navy transition-colors hover:border-bronze"
-        >
-          <WhatsAppIcon />
-          Order via WhatsApp
-        </a>
-        <button
-          type="button"
-          onClick={() => setShowForm(!showForm)}
-          className="inline-flex w-full items-center justify-center border border-hairline bg-porcelain px-6 py-4 font-sans text-[11px] uppercase tracking-[0.16em] text-navy transition-colors hover:border-bronze"
-        >
-          {showForm ? "Hide form" : "Send inquiry"}
-        </button>
-      </div>
-
-      <p className="font-sans text-[13px] leading-[1.7] text-muted">
-        Complimentary gift packaging & insured shipping across Pakistan and worldwide.
+      <p className="flex items-start gap-2.5 border-t border-glaze pt-5 text-sm text-stone">
+        <Gift className="mt-0.5 size-4 shrink-0 text-bronze" aria-hidden />
+        Gift packaging included. Insured shipping across Pakistan and worldwide.
       </p>
 
-      {showForm && (
-        <div className="border border-hairline bg-porcelain p-6">
-          <InquiryForm defaultProduct={variant.title ? `${product.name} - ${variant.title}` : product.name} defaultSize={variant.title} />
+      <div>
+        <Button variant="quiet" onClick={() => setShowForm(!showForm)} aria-expanded={showForm}>
+          {showForm ? "Close the question form" : "Ask a question about this size"}
+        </Button>
+        {showForm && (
+          <div className="mt-4 rounded-[6px] border border-glaze bg-white p-5 sm:p-6">
+            <InquiryForm defaultProduct={variant.title ? `${product.name} - ${variant.title}` : product.name} defaultSize={variant.title} />
+          </div>
+        )}
+      </div>
+
+      <div
+        className={cn(
+          "fixed inset-x-0 bottom-0 z-40 flex items-center gap-4 border-t border-glaze bg-porcelain/95 px-4 py-3 backdrop-blur-sm transition-transform duration-200 lg:hidden",
+          buyHidden ? "translate-y-0" : "pointer-events-none translate-y-full",
+        )}
+        aria-hidden={!buyHidden}
+      >
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm text-stone">{variant.title || product.name}</p>
+          <p className="tabular font-medium text-ink">{formatPKR(variant.pricePKR)}</p>
         </div>
-      )}
+        <Button disabled={!variant.inStock} onClick={handleAddToCart} tabIndex={buyHidden ? 0 : -1}>
+          {added ? "Added" : "Add to cart"}
+        </Button>
+      </div>
     </div>
   );
 }

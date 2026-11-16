@@ -1,17 +1,18 @@
 import type { Metadata } from "next";
 import { notFound, permanentRedirect } from "next/navigation";
 import Link from "next/link";
+import { ChevronRight } from "lucide-react";
 import { ProductGallery } from "@/components/products/ProductGallery";
 import { VariantSelector } from "@/components/products/VariantSelector";
 import { ProductActions } from "@/components/products/ProductActions";
 import { ProductAccordion } from "@/components/products/ProductAccordion";
 import { BrandBanner } from "@/components/home/BrandBanner";
+import { Price } from "@/components/site/Price";
 import { getPage } from "@/lib/cms/server";
 import { sectionDefaults } from "@/lib/cms/sections";
 import { lookupProduct, type CatalogProduct, type CatalogVariant } from "@/lib/products";
 import { resolveVariant, variantHref } from "@/lib/catalog/storefront";
 import { buildMetadata, productGroupJsonLd, breadcrumbJsonLd, faqJsonLd } from "@/lib/seo";
-import { formatDiameter, formatPKR, formatUSD } from "@/lib/format";
 
 type PageProps = {
   params: Promise<{ slug: string }>;
@@ -104,54 +105,55 @@ export default async function ProductPage(props: PageProps) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqLd) }}
       />
 
-      <div className="py-8 sm:py-12">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <nav
-            aria-label="Breadcrumb"
-            className="mb-10 font-sans text-[11px] uppercase tracking-[0.18em] text-muted"
-          >
-            <Link href="/" className="hover:text-navy">
-              Home
-            </Link>
-            <span className="mx-2 text-hairline">/</span>
-            <Link href="/products" className="hover:text-navy">
-              Products
-            </Link>
-            <span className="mx-2 text-hairline">/</span>
-            {product.category && (
-              <>
-                <Link href={`/categories/${product.category.slug}`} className="hover:text-navy">
-                  {product.category.name}
+      <div className="pt-6 pb-20 sm:pt-10 sm:pb-28">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+          <nav aria-label="Breadcrumb" className="mb-8 text-sm text-stone">
+            <ol className="flex flex-wrap items-center gap-1.5">
+              <li>
+                <Link href="/" className="hover:text-ink">
+                  Home
                 </Link>
-                <span className="mx-2 text-hairline">/</span>
-              </>
-            )}
-            <span className="text-navy">{product.name}</span>
+              </li>
+              <li aria-hidden><ChevronRight className="size-3.5 text-stone/60" /></li>
+              <li>
+                <Link href="/products" className="hover:text-ink">
+                  Products
+                </Link>
+              </li>
+              {product.category && (
+                <>
+                  <li aria-hidden><ChevronRight className="size-3.5 text-stone/60" /></li>
+                  <li>
+                    <Link href={`/categories/${product.category.slug}`} className="hover:text-ink">
+                      {product.category.name}
+                    </Link>
+                  </li>
+                </>
+              )}
+              <li aria-hidden><ChevronRight className="size-3.5 text-stone/60" /></li>
+              <li aria-current="page" className="text-ink">
+                {product.name}
+              </li>
+            </ol>
           </nav>
 
-          <div className="grid grid-cols-1 items-start gap-12 lg:grid-cols-[minmax(0,61.8fr)_minmax(0,38.2fr)] lg:gap-16">
-            <ProductGallery key={variant.key} images={variant.images.map((img) => img.url)} productName={product.name} />
+          <div className="grid grid-cols-1 items-start gap-10 lg:grid-cols-12 lg:gap-14">
+            <div className="lg:col-span-7">
+              <ProductGallery key={variant.key} images={variant.images.map((img) => img.url)} productName={product.name} />
+            </div>
 
-            <div className="lg:sticky lg:top-24 lg:self-start">
-              <p className="font-sans text-[10px] uppercase tracking-[0.22em] text-bronze">
-                Collection 01 · Unglazed vitrified porcelain
-              </p>
-              <h1 className="mt-4 font-serif text-4xl font-light tracking-tight text-navy lg:text-[42px] lg:leading-[1.05]">
-                {product.name}
-              </h1>
-              <p className="mt-6 font-sans text-[15px] tracking-wide text-navy">
-                {variant.compareAtPKR && variant.compareAtPKR > variant.pricePKR && (
-                  <s className="mr-3 text-muted">{formatPKR(variant.compareAtPKR)}</s>
-                )}
-                {formatPKR(variant.pricePKR)}
-                <span className="mx-3 text-hairline" aria-hidden="true">
-                  |
-                </span>
-                <span className="text-muted">{formatUSD(variant.priceUSD)} USD</span>
-              </p>
-              {product.subtitle && (
-                <p className="mt-3 font-sans text-[14px] text-muted">{product.subtitle}</p>
-              )}
+            <div className="lg:sticky lg:top-24 lg:col-span-5 lg:self-start">
+              {product.category && <p className="text-sm text-stone">{product.category.name}</p>}
+              <h1 className="mt-2 text-4xl text-ink sm:text-[2.75rem] sm:leading-[1.08]">{product.name}</h1>
+              {product.subtitle && <p className="mt-3 text-base text-stone">{product.subtitle}</p>}
+              <Price
+                size="lg"
+                className="mt-5"
+                pricePKR={variant.pricePKR}
+                priceUSD={variant.priceUSD}
+                compareAtPKR={variant.compareAtPKR}
+                compareAtUSD={variant.compareAtUSD}
+              />
               {product.options.length > 0 && (
                 <div className="mt-8">
                   <VariantSelector product={product} current={variant} />
@@ -163,7 +165,7 @@ export default async function ProductPage(props: PageProps) {
             </div>
           </div>
 
-          <div className="mt-16">
+          <div className="mt-20 lg:mt-28">
             <ProductAccordion
               items={[
                 {
@@ -172,7 +174,7 @@ export default async function ProductPage(props: PageProps) {
                   content: (
                     <div>
                       <p>{product.description}</p>
-                      <ul className="mt-4 list-disc space-y-2 pl-5">
+                      <ul className="mt-4 list-disc space-y-2 pl-5 marker:text-bronze">
                         {product.features.map((feature) => (
                           <li key={feature}>{feature}</li>
                         ))}
@@ -187,9 +189,9 @@ export default async function ProductPage(props: PageProps) {
                     <table className="w-full text-left">
                       <tbody>
                         {Object.entries(variantSpecs(product, variant)).map(([key, value]) => (
-                          <tr key={key} className="border-b border-hairline">
-                            <th className="py-2 pr-4 font-medium text-navy">{key}</th>
-                            <td className="py-2">{value}</td>
+                          <tr key={key} className="border-b border-glaze last:border-0">
+                            <th scope="row" className="py-2.5 pr-6 font-medium text-ink">{key}</th>
+                            <td className="tabular py-2.5">{value}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -198,9 +200,9 @@ export default async function ProductPage(props: PageProps) {
                 },
                 {
                   id: "care",
-                  title: "Care Instructions",
+                  title: "Care",
                   content: (
-                    <ul className="list-disc space-y-2 pl-5">
+                    <ul className="list-disc space-y-2 pl-5 marker:text-bronze">
                       {product.careInstructions.map((item) => (
                         <li key={item}>{item}</li>
                       ))}
@@ -209,18 +211,13 @@ export default async function ProductPage(props: PageProps) {
                 },
                 {
                   id: "delivery",
-                  title: "Delivery & Returns",
+                  title: "Delivery and returns",
                   content: <p>{product.deliveryInfo}</p>,
                 },
               ]}
             />
           </div>
 
-          {variant.diameterCm > 0 && (
-            <p className="mt-8 text-center font-sans text-[12px] tracking-wide text-muted">
-              {variant.title} — {formatDiameter(variant.diameterCm)}
-            </p>
-          )}
         </div>
       </div>
 

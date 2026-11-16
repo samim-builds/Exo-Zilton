@@ -40,12 +40,11 @@ export default async function CategoryPage({ params }: PageProps) {
   ]);
 
   return (
-    <div className="py-12 sm:py-16">
+    <div className="pt-14 pb-20 sm:pt-20 sm:pb-28">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }} />
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
         <SectionHeading
-          align="left"
-          eyebrow="Shop Exo Zilton"
+          as="h1"
           title={category.name}
           description={category.description ?? undefined}
         />
@@ -60,7 +59,7 @@ export default async function CategoryPage({ params }: PageProps) {
               <li key={child.slug}>
                 <Link
                   href={`/categories/${child.slug}`}
-                  className="font-sans text-[12px] uppercase tracking-[0.16em] text-bronze underline underline-offset-4 hover:text-navy"
+                  className="text-sm text-ink underline decoration-ink/30 underline-offset-4 hover:decoration-bronze"
                 >
                   {child.name}
                 </Link>
@@ -73,7 +72,12 @@ export default async function CategoryPage({ params }: PageProps) {
           {products.length > 0 ? (
             <ProductGrid products={products} />
           ) : (
-            <p className="py-12 text-center text-charcoal/70">New pieces are on their way. Check back soon.</p>
+            <div className="py-16 text-center">
+              <p className="text-ink">No products in this category yet.</p>
+              <Link href="/products" className="mt-3 inline-block text-sm text-ink underline decoration-ink/30 underline-offset-4 hover:decoration-bronze">
+                See all products
+              </Link>
+            </div>
           )}
         </div>
       </div>
