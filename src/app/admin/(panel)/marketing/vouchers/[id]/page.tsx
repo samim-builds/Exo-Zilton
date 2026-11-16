@@ -39,7 +39,7 @@ export default async function VoucherPage({ params }: { params: Promise<{ id: st
           </Badge>
         }
       />
-      <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
         <Card>
           <CardHeader>
             <CardTitle>History</CardTitle>
@@ -56,7 +56,7 @@ export default async function VoucherPage({ params }: { params: Promise<{ id: st
               <TableBody>
                 {voucher.transactions.map((t) => (
                   <TableRow key={t.id}>
-                    <TableCell className="whitespace-nowrap text-muted-foreground">
+                    <TableCell className="whitespace-normal text-muted-foreground sm:whitespace-nowrap">
                       {t.createdAt.toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" })}
                     </TableCell>
                     <TableCell>

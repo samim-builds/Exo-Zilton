@@ -143,10 +143,10 @@ export function PageEditor({ page, path }: { page: PageForEdit; path: string }) 
             <span className="font-mono">{path}</span>
           </div>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <Button variant="outline" onClick={() => save("preview")} disabled={pending}>
+        <div className="flex items-center gap-2 sm:flex-wrap">
+          <Button variant="outline" onClick={() => save("preview")} disabled={pending} aria-label="Preview">
             <Eye />
-            Preview
+            <span className="hidden sm:inline">Preview</span>
           </Button>
           <Button variant="outline" onClick={() => save("draft")} disabled={pending || !dirty}>
             Save draft
@@ -194,7 +194,7 @@ export function PageEditor({ page, path }: { page: PageForEdit; path: string }) 
         </div>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[20rem_minmax(0,1fr)]">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[20rem_minmax(0,1fr)]">
         <div className="space-y-6">
           <Card>
             <CardHeader>
