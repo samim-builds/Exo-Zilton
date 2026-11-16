@@ -100,7 +100,8 @@ async function main() {
       });
 
       console.log(`Created "${product.slug}" with ${plan.variants.length} variants; archived the legacy rows.`);
-    });
+      // Many sequential writes; a remote database easily passes the 5s default.
+    }, { timeout: 120_000, maxWait: 20_000 });
   }
 
   // Link past order lines to the variant that replaced their product row.
