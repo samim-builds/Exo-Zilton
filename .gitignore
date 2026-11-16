@@ -45,3 +45,6 @@ next-env.d.ts
 
 # Local admin uploads (production uses Vercel Blob)
 /public/uploads
+
+# Local development database dumps
+.local-db/

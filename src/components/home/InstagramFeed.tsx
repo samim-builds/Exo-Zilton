@@ -4,7 +4,7 @@ import { Reveal } from "@/components/shared/Reveal";
 import { siteConfig } from "@/lib/site";
 import { instagramUrl } from "@/lib/cms/settings";
 import type { SectionData } from "@/lib/cms/sections";
-import { instagramPosts, getInstagramPostUrl } from "@/lib/instagram";
+
 
 function InstagramIcon({ className }: { className?: string }) {
   return (
@@ -26,14 +26,14 @@ function InstagramIcon({ className }: { className?: string }) {
   );
 }
 
-function InstagramGrid({ handle }: { handle: string }) {
+function InstagramGrid({ handle, posts }: { handle: string; posts: SectionData<"instagram-feed">["posts"] }) {
 
   return (
     <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3 lg:grid-cols-6">
-      {instagramPosts.map((post) => (
+      {posts.filter((post) => post.image).map((post, index) => (
         <a
-          key={post.id}
-          href={getInstagramPostUrl(handle, post)}
+          key={index}
+          href={post.href || instagramUrl(handle)}
           target="_blank"
           rel="noopener noreferrer"
           className="group relative aspect-square overflow-hidden rounded-md bg-navy/20"
@@ -104,7 +104,7 @@ export function InstagramFeed({ data, handle }: { data: SectionData<"instagram-f
           </a>
         </div>
 
-        {useElfsight ? <ElfsightFeed /> : <InstagramGrid handle={handle} />}
+        {useElfsight ? <ElfsightFeed /> : <InstagramGrid handle={handle} posts={data.posts} />}
 
         <div className="mt-10 flex justify-center">
           <a

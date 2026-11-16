@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { instagramPosts } from "@/lib/instagram";
 
 // The section registry: every block a CMS page can contain, with its data
 // schema, the defaults that reproduce the site as it was hand-coded, and field
@@ -68,7 +69,15 @@ const comparisonSchema = z.object({
 
 const brandBannerSchema = z.object({ eyebrow: text, title: text, body: longText, ctaLabel: text, ctaHref: text });
 
-const instagramSchema = z.object({ eyebrow: text, title: text });
+const instagramPostSchema = z.object({ image: text, alt: text, href: text });
+const defaultInstagramPosts = instagramPosts.map((p) => ({ image: p.image, alt: p.alt, href: p.href ?? "" }));
+
+const instagramSchema = z.object({
+  eyebrow: text,
+  title: text,
+  // Added later; sections saved before then get the original six images.
+  posts: z.array(instagramPostSchema).max(12).default(() => structuredClone(defaultInstagramPosts)),
+});
 
 const pageHeadingSchema = z.object({ eyebrow: text, title: text, description: longText });
 
@@ -364,10 +373,26 @@ export const SECTION_TYPES = {
   "instagram-feed": {
     label: "Instagram feed",
     schema: instagramSchema,
-    defaults: { eyebrow: "Stay Connected", title: "Follow our Instagram journey..." } satisfies z.infer<typeof instagramSchema>,
+    defaults: {
+      eyebrow: "Stay Connected",
+      title: "Follow our Instagram journey...",
+      posts: defaultInstagramPosts,
+    } satisfies z.infer<typeof instagramSchema>,
     fields: [
       { key: "eyebrow", label: "Eyebrow", kind: "text" },
       { key: "title", label: "Title", kind: "text", help: "The handle comes from Settings → Contact." },
+      {
+        key: "posts",
+        label: "Images",
+        kind: "list",
+        itemLabel: "Image",
+        help: "Shown when no Instagram widget is connected. Up to 12.",
+        fields: [
+          { key: "image", label: "Image", kind: "image" },
+          { key: "alt", label: "Alt text", kind: "text" },
+          { key: "href", label: "Instagram post link (optional)", kind: "url" },
+        ],
+      },
     ] as FieldDescriptor[],
   },
   "page-heading": {

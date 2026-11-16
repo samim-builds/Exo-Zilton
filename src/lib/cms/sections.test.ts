@@ -57,3 +57,13 @@ describe("interpolateSection", () => {
     expect(json).not.toContain("{{");
   });
 });
+
+describe("instagram-feed posts", () => {
+  it("fills the default posts into a section saved before posts were editable", () => {
+    const [s] = parseSections([{ id: "ig", type: "instagram-feed", visible: true, data: { eyebrow: "E", title: "T" } }]);
+    expect(s?.type).toBe("instagram-feed");
+    const data = s!.data as { posts: { image: string }[] };
+    expect(data.posts).toHaveLength(6);
+    expect(data.posts[0].image).toBe("/hero/grind.webp");
+  });
+});

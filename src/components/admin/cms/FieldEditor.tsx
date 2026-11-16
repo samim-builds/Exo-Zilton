@@ -1,13 +1,13 @@
 "use client";
 
-import { ArrowDown, ArrowUp, ImageIcon, Plus, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Field } from "@/components/admin/form/Field";
-import { MediaPicker } from "@/components/admin/media/MediaPicker";
+import { MediaSelect } from "@/components/admin/media/MediaSelect";
 import type { FieldDescriptor } from "@/lib/cms/sections";
 
 // Renders a form from section field descriptors. Values are plain JSON objects;
@@ -62,28 +62,7 @@ function RowControls({ index, count, onMove, onRemove }: { index: number; count:
 }
 
 function ImageInput({ value, onChange }: { value: string; onChange: (v: string) => void }) {
-  return (
-    <div className="flex items-center gap-3">
-      <div className="flex size-14 shrink-0 items-center justify-center overflow-hidden rounded-md border bg-muted">
-        {value ? (
-          // eslint-disable-next-line @next/next/no-img-element -- admin thumbnail of an arbitrary URL
-          <img src={value} alt="" className="size-full object-cover" />
-        ) : (
-          <ImageIcon className="size-5 text-muted-foreground" />
-        )}
-      </div>
-      <Input value={value} onChange={(e) => onChange(e.target.value)} placeholder="/path/or/https://…" className="min-w-0" />
-      <MediaPicker
-        defaultFolder="pages"
-        trigger={
-          <Button type="button" variant="outline" size="sm">
-            Choose
-          </Button>
-        }
-        onPick={(items) => items[0] && onChange(items[0].url)}
-      />
-    </div>
-  );
+  return <MediaSelect value={value} onChange={onChange} folder="pages" />;
 }
 
 function StringsInput({ value, onChange }: { value: string[]; onChange: (v: string[]) => void }) {

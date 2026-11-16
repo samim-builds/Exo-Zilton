@@ -41,5 +41,15 @@ export async function removeStoredFile(asset: Pick<MediaAsset, "url" | "pathname
 
 /** Number of places an asset URL is referenced, so deletes can warn first. */
 export async function countMediaUsage(url: string): Promise<number> {
-  return prisma.productImage.count({ where: { url } });
+  // CMS pages and settings hold image URLs inside JSON, so search their text.
+  const quoted = JSON.stringify(url);
+  const [products, [cms]] = await Promise.all([
+    prisma.productImage.count({ where: { url } }),
+    prisma.$queryRaw<{ n: bigint }[]>`
+      SELECT (
+        (SELECT count(*) FROM "Page" WHERE strpos("sections"::text, ${quoted}) > 0 OR strpos(coalesce("draftSections"::text, ''), ${quoted}) > 0)
+        + (SELECT count(*) FROM "SiteSetting" WHERE strpos("value"::text, ${quoted}) > 0)
+      ) AS n`,
+  ]);
+  return products + Number(cms.n);
 }
