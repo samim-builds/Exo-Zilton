@@ -2,6 +2,10 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
 import { ORDER_STATUSES } from "@/lib/order-schema";
 
 type OrderUpdateFormProps = {
@@ -44,59 +48,41 @@ export function OrderUpdateForm({ orderId, status, paid, courier, trackingNumber
     }
   }
 
-  const inputClass = "w-full rounded-md border border-charcoal/20 px-3 py-2 text-sm";
+  const selectClass = "h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50";
 
   return (
     <form onSubmit={save} className="space-y-4">
       <div>
-        <label htmlFor="status" className="mb-1 block text-sm font-medium text-navy">Status</label>
+        <label htmlFor="status" className="mb-1.5 block text-sm font-medium">Status</label>
         <select
           id="status"
           value={form.status}
           onChange={(e) => setForm({ ...form, status: e.target.value })}
-          className={inputClass}
+          className={selectClass}
         >
           {ORDER_STATUSES.map((s) => (
             <option key={s} value={s}>{s.charAt(0) + s.slice(1).toLowerCase()}</option>
           ))}
         </select>
       </div>
-      <label className="flex items-center gap-2 text-sm text-navy">
-        <input
-          type="checkbox"
-          checked={form.paid}
-          onChange={(e) => setForm({ ...form, paid: e.target.checked })}
-        />
+      <label className="flex items-center gap-2 text-sm">
+        <Checkbox checked={form.paid} onCheckedChange={(checked) => setForm({ ...form, paid: checked === true })} />
         Payment received
       </label>
       <div>
-        <label htmlFor="courier" className="mb-1 block text-sm font-medium text-navy">Courier</label>
-        <input
-          id="courier"
-          placeholder="e.g. TCS, Leopards, DHL"
-          value={form.courier}
-          onChange={(e) => setForm({ ...form, courier: e.target.value })}
-          className={inputClass}
-        />
+        <label htmlFor="courier" className="mb-1.5 block text-sm font-medium">Courier</label>
+        <Input id="courier" placeholder="e.g. TCS, Leopards, DHL" value={form.courier} onChange={(e) => setForm({ ...form, courier: e.target.value })} />
       </div>
       <div>
-        <label htmlFor="trackingNumber" className="mb-1 block text-sm font-medium text-navy">Tracking number</label>
-        <input
-          id="trackingNumber"
-          value={form.trackingNumber}
-          onChange={(e) => setForm({ ...form, trackingNumber: e.target.value })}
-          className={inputClass}
-        />
+        <label htmlFor="trackingNumber" className="mb-1.5 block text-sm font-medium">Tracking number</label>
+        <Input id="trackingNumber" value={form.trackingNumber} onChange={(e) => setForm({ ...form, trackingNumber: e.target.value })} />
       </div>
       <div className="flex items-center gap-3">
-        <button
-          type="submit"
-          disabled={saving}
-          className="bg-navy px-5 py-2.5 text-sm uppercase tracking-widest text-white disabled:opacity-50"
-        >
-          {saving ? "Saving…" : "Save"}
-        </button>
-        {message && <span className="text-sm text-charcoal/70">{message}</span>}
+        <Button type="submit" disabled={saving}>
+          {saving && <Loader2 className="animate-spin" />}
+          Save changes
+        </Button>
+        {message && <span className="text-sm text-muted-foreground">{message}</span>}
       </div>
     </form>
   );

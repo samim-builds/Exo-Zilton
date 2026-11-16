@@ -8,7 +8,7 @@ import {
   type ColumnDef,
   type RowSelectionState,
 } from "@tanstack/react-table";
-import { ChevronLeft, ChevronRight, ListFilter, Search, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Inbox, ListFilter, Search, SearchX, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -25,6 +25,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { PAGE_SIZES } from "@/lib/admin/table-params";
 import { cn } from "@/lib/utils";
 import { useTableUrl } from "./use-table-url";
+import { EmptyState } from "@/components/admin/shell/EmptyState";
 
 export type TableFilter = {
   key: string;
@@ -39,7 +40,10 @@ type DataTableProps<T> = {
   getRowId: (row: T) => string;
   searchPlaceholder?: string;
   filters?: TableFilter[];
+  /** Shown when the list itself is empty (no search or filter applied). */
   emptyMessage?: string;
+  /** Optional next step under the empty message, e.g. a "New product" button. */
+  emptyAction?: React.ReactNode;
   /** Rendered in a toolbar while rows are selected; enables the checkbox column. */
   bulkActions?: (selected: T[], clear: () => void) => React.ReactNode;
 };
@@ -51,7 +55,8 @@ export function DataTable<T>({
   getRowId,
   searchPlaceholder = "Search…",
   filters = [],
-  emptyMessage = "No results.",
+  emptyMessage = "Nothing here yet.",
+  emptyAction,
   bulkActions,
 }: DataTableProps<T>) {
   const { searchParams, update, isPending } = useTableUrl();
@@ -104,6 +109,8 @@ export function DataTable<T>({
 
   const selected = table.getSelectedRowModel().rows.map((r) => r.original);
   const activeFilterCount = filters.filter((f) => searchParams.get(f.key)).length;
+  const narrowed = activeFilterCount > 0 || Boolean(searchParams.get("q"));
+  const clearAll = () => update({ q: null, ...Object.fromEntries(filters.map((f) => [f.key, null])) });
 
   return (
     <div className="space-y-3">
@@ -132,7 +139,7 @@ export function DataTable<T>({
         </div>
       )}
 
-      <div className={cn("overflow-hidden rounded-md border bg-background transition-opacity", isPending && "opacity-60")}>
+      <div className={cn("overflow-hidden rounded-md border bg-background tabular-nums transition-opacity", isPending && "opacity-60")}>
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((group) => (
@@ -148,8 +155,21 @@ export function DataTable<T>({
           <TableBody>
             {table.getRowModel().rows.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={allColumns.length} className="h-32 text-center text-muted-foreground">
-                  {emptyMessage}
+                <TableCell colSpan={allColumns.length} className="whitespace-normal">
+                  {narrowed ? (
+                    <EmptyState
+                      icon={SearchX}
+                      title="Nothing matches this search"
+                      description="Try a different word or clear the filters."
+                      action={
+                        <Button variant="outline" size="sm" onClick={clearAll}>
+                          Clear search and filters
+                        </Button>
+                      }
+                    />
+                  ) : (
+                    <EmptyState icon={Inbox} title={emptyMessage} action={emptyAction} />
+                  )}
                 </TableCell>
               </TableRow>
             ) : (
@@ -222,6 +242,12 @@ function SearchInput({
   onSearch: (q: string) => void;
 }) {
   const [value, setValue] = useState(initial);
+  // Follow the URL when the search changes from outside the box (e.g. "Clear search").
+  const [synced, setSynced] = useState(initial);
+  if (initial !== synced) {
+    setSynced(initial);
+    setValue(initial);
+  }
 
   // Debounce so typing doesn't trigger a server round-trip per keystroke.
   useEffect(() => {

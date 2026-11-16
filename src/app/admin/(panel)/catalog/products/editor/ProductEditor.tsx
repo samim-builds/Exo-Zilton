@@ -91,7 +91,7 @@ export function ProductEditor({ initial, categories }: { initial: ProductInput; 
             ← Products
           </Link>
           <div className="mt-1 flex items-center gap-3">
-            <h1 className="text-2xl font-semibold tracking-tight text-navy">{form.name || "New product"}</h1>
+            <h1 className="text-[1.375rem] leading-tight font-semibold tracking-tight text-foreground sm:text-[1.5rem]">{form.name || "New product"}</h1>
             <Badge variant="outline" className={STATUS_STYLES[form.status]}>
               {form.status.charAt(0) + form.status.slice(1).toLowerCase()}
             </Badge>

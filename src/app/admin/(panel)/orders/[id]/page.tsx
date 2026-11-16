@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ChevronLeft } from "lucide-react";
 import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { isAdminAuthenticated } from "@/lib/session";
@@ -31,24 +32,25 @@ export default async function AdminOrderDetailPage({ params }: PageProps) {
 
   return (
     <div>
-      <Link href="/admin/orders" className="text-sm text-charcoal/70 hover:text-navy">
-        ← All orders
+      <Link href="/admin/orders" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+        <ChevronLeft className="size-4" />
+        All orders
       </Link>
-      <div className="mt-2 mb-6 flex items-center gap-4">
-        <h1 className="font-serif text-3xl font-semibold text-navy">Order #{order.number}</h1>
+      <div className="mt-2 mb-6 flex flex-wrap items-center gap-3">
+        <h1 className="text-[1.375rem] leading-tight font-semibold tracking-tight sm:text-[1.5rem]">Order #{order.number}</h1>
         <OrderStatusBadge status={order.status} />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
         <div className="space-y-6">
-          <section className="rounded-lg border border-charcoal/10 bg-white p-6">
-            <h2 className="mb-4 font-medium text-navy">Items</h2>
-            <ul className="space-y-2 text-sm">
+          <section className="rounded-lg border bg-card p-6">
+            <h2 className="mb-4 font-semibold">Items</h2>
+            <ul className="space-y-2 text-sm tabular-nums">
               {order.items.map((item) => (
                 <li key={item.id} className="flex justify-between gap-4">
                   <span>
                     {item.quantity} × {item.productName}{" "}
-                    <span className="text-charcoal/60">({item.sku})</span>
+                    <span className="text-muted-foreground">({item.sku})</span>
                   </span>
                   <span>{formatMoney(item.unitPrice * item.quantity, order.currency)}</span>
                 </li>
@@ -60,20 +62,20 @@ export default async function AdminOrderDetailPage({ params }: PageProps) {
                 <span>-{formatMoney(-line.amount, order.currency)}</span>
               </div>
             ))}
-            <div className="mt-4 flex justify-between border-t border-charcoal/10 pt-4 font-medium text-navy">
+            <div className="mt-4 flex justify-between border-t pt-4 font-semibold tabular-nums">
               <span>Total</span>
               <span>{formatMoney(order.total, order.currency)}</span>
             </div>
-            <p className="mt-2 text-xs text-charcoal/60">
+            <p className="mt-2 text-xs text-muted-foreground">
               {order.paymentMethod === "COD"
                 ? "Cash on delivery"
-                : "International — send shipping quote and payment link"}
+                : "International: send a shipping quote and payment link"}
             </p>
           </section>
 
-          <section className="rounded-lg border border-charcoal/10 bg-white p-6 text-sm">
-            <h2 className="mb-4 font-medium text-navy">Customer & delivery</h2>
-            <p className="text-navy">{order.name}</p>
+          <section className="rounded-lg border bg-card p-6 text-sm">
+            <h2 className="mb-4 font-semibold">Customer & delivery</h2>
+            <p className="font-medium">{order.name}</p>
             <p>
               <a href={`mailto:${order.email}`} className="underline">{order.email}</a>
             </p>
@@ -92,16 +94,16 @@ export default async function AdminOrderDetailPage({ params }: PageProps) {
             <p>{[order.city, order.postalCode].filter(Boolean).join(" ")}</p>
             <p>{order.country}</p>
             {order.notes && (
-              <p className="mt-3 rounded-md bg-cream/50 p-3 text-charcoal/80">Notes: {order.notes}</p>
+              <p className="mt-3 rounded-md bg-muted p-3">Notes: {order.notes}</p>
             )}
-            <p className="mt-3 text-xs text-charcoal/60">
+            <p className="mt-3 text-xs text-muted-foreground">
               Placed {order.createdAt.toLocaleString("en-GB")}
             </p>
           </section>
         </div>
 
-        <section className="h-fit rounded-lg border border-charcoal/10 bg-white p-6">
-          <h2 className="mb-4 font-medium text-navy">Update order</h2>
+        <section className="h-fit rounded-lg border bg-card p-6">
+          <h2 className="mb-4 font-semibold">Update order</h2>
           <OrderUpdateForm
             orderId={order.id}
             status={order.status}

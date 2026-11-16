@@ -107,7 +107,7 @@ export function OrdersTable({ rows, total }: { rows: OrderRow[]; total: number }
       getRowId={(row) => row.id}
       searchPlaceholder="Search order #, name, email, phone…"
       filters={filters}
-      emptyMessage="No orders match. Orders placed through the website checkout appear here."
+      emptyMessage="No orders yet. Orders placed through the website checkout appear here."
     />
   );
 }

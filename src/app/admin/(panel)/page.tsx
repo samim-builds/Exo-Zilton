@@ -127,7 +127,7 @@ export default async function AdminDashboardPage() {
                 <CardAction>
                   <kpi.icon className="size-4 text-muted-foreground" />
                 </CardAction>
-                <CardTitle className="text-2xl tabular-nums">{kpi.value}</CardTitle>
+                <CardTitle className="text-[1.625rem] leading-tight tabular-nums">{kpi.value}</CardTitle>
               </CardHeader>
               <CardContent className="text-xs text-muted-foreground">{kpi.hint}</CardContent>
             </Card>
@@ -156,7 +156,7 @@ export default async function AdminDashboardPage() {
                   <li key={order.id}>
                     <Link
                       href={`/admin/orders/${order.id}`}
-                      className="flex items-center gap-3 py-2.5 text-sm hover:text-navy"
+                      className="flex items-center gap-3 py-2.5 text-sm hover:text-foreground hover:underline"
                     >
                       <span className="w-14 font-medium">#{order.number}</span>
                       <span className="min-w-0 flex-1 truncate">{order.name}</span>

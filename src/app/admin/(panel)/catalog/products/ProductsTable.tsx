@@ -242,7 +242,7 @@ export function ProductsTable({
           options: [...categories.map((c) => ({ value: c.id, label: c.name })), { value: "none", label: "Uncategorised" }],
         },
       ]}
-      emptyMessage="No products match."
+      emptyMessage="No products yet. Use Add product to create the first one."
       bulkActions={(selected, clear) => <BulkActions selected={selected} clear={clear} />}
     />
   );

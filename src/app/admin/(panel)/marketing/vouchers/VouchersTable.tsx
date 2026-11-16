@@ -122,7 +122,7 @@ export function VouchersTable({ rows, total }: { rows: VoucherListRow[]; total: 
           ],
         },
       ]}
-      emptyMessage="No gift vouchers yet."
+      emptyMessage="No gift vouchers yet. Use Issue vouchers to give a customer store credit."
       bulkActions={(selected, clear) => <BulkActions selected={selected} clear={clear} />}
     />
   );

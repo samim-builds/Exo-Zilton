@@ -315,7 +315,7 @@ export function InventoryTable({ rows, total }: { rows: InventoryRow[]; total: n
             ],
           },
         ]}
-        emptyMessage="No variants match."
+        emptyMessage="No variants yet. Add sizes or other options to a product and they appear here."
         bulkActions={(selected, clear) => <BulkActions selected={selected} clear={clear} />}
       />
       {adjusting && <AdjustDialog row={adjusting} onClose={() => setAdjusting(null)} />}

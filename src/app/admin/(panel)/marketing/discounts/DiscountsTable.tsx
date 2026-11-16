@@ -161,7 +161,7 @@ export function DiscountsTable({ rows, total }: { rows: DiscountListRow[]; total
           ],
         },
       ]}
-      emptyMessage="No discounts yet."
+      emptyMessage="No discount codes yet. Use Create discount to add one."
       bulkActions={(selected, clear) => <BulkActions selected={selected} clear={clear} />}
     />
   );
