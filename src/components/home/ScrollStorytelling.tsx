@@ -22,8 +22,11 @@ export function ScrollStorytelling({ data }: { data: SectionData<"scroll-story">
           </div>
 
           <div className="lg:col-span-7">
-            <div className="relative aspect-square overflow-hidden rounded-[2px] bg-porcelain/5 lg:sticky lg:top-28">
-              <Image src={data.image} alt={data.imageAlt} fill sizes="(max-width: 1024px) 100vw, 55vw" className="object-cover" />
+            {/* Sticky on a wrapper: fill images need a relative parent. */}
+            <div className="lg:sticky lg:top-28">
+              <div className="relative aspect-square overflow-hidden rounded-[2px] bg-porcelain/5">
+                <Image src={data.image} alt={data.imageAlt} fill sizes="(max-width: 1024px) 100vw, 55vw" className="object-cover" />
+              </div>
             </div>
           </div>
         </div>

@@ -32,7 +32,7 @@ export function Header({ contact, links }: { contact: SiteSettings["contact"]; l
     <header className="sticky top-0 z-50 border-b border-glaze bg-porcelain/95 backdrop-blur-sm">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-6 px-4 sm:px-6 lg:h-[4.5rem] lg:px-8">
         <Link href="/" className="flex items-center gap-2.5" onClick={() => setOpen(false)}>
-          <Image src="/brand/logo.png" alt="" width={32} height={32} priority className="rounded-full" />
+          <Image src="/brand/logo.png" alt="" width={32} height={32} priority className="size-8 rounded-full" />
           <span className="font-display text-xl text-ink [font-variation-settings:'SOFT'_100,'opsz'_36]">{contact.siteName}</span>
         </Link>
 
